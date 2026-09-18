@@ -3776,11 +3776,196 @@ body.admin-editor-open {
   text-align: center;
 }
 
+// ── daily 사진 — 1장은 .daily-media, 2장 이상은 scroll-snap 캐러셀 ──
+// 프레임 비율은 daily.js 가 inline aspect-ratio 로 지정(첫 사진 기준), 이미지는 contain
+.daily-media,
+.daily-carousel {
+  position: relative;
+  margin-top: 14px;
+  margin-left: 18px;
+  max-height: 80vh;
+  background: $surface-lowest;
+  border: 1px solid rgba($border, 0.3);
+  overflow: hidden;
+
+  a { display: block; width: 100%; height: 100%; }
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.daily-carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.daily-carousel-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.daily-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: none;          // 터치 환경은 스와이프 — hover 가능한 포인터에서만 표시
+  align-items: center;
+  justify-content: center;
+  background: rgba($surface-lowest, 0.75);
+  border: 1px solid rgba($border, 0.6);
+  color: $text;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.is-prev { left: 8px; }
+  &.is-next { right: 8px; }
+  &:hover:not(:disabled) { border-color: $accent; color: $accent; }
+  &:disabled { opacity: 0.25; cursor: default; }
+
+  @media (hover: hover) and (pointer: fine) { display: flex; }
+}
+
+.daily-carousel-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  background: rgba($surface-lowest, 0.75);
+  color: $text;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+// ── daily 관리자 UI — body.is-admin 에서만 표시 (admin.js 가 클래스 토글) ──
+.daily-compose,
+.daily-entry-del {
+  display: none;
+}
+
+body.is-admin .daily-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px;
+  background: $surface;
+  border: 2px dashed rgba($border, 0.5);
+}
+
+.daily-compose-text {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background: $surface-lowest;
+  border: 1px solid rgba($border, 0.5);
+  color: $text;
+  font-family: $font-base;
+  font-size: 1rem;
+  line-height: 1.7;
+  resize: vertical;
+
+  &:focus { outline: none; border-color: $accent; }
+}
+
+.daily-compose-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  &:empty { display: none; }
+}
+
+.daily-compose-thumb {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border: 1px solid rgba($border, 0.5);
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  button {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background: $surface-highest;
+    border: 1px solid $border;
+    color: $text;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    &:hover { border-color: $accent; color: $accent; }
+  }
+}
+
+.daily-compose-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.daily-compose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: $surface;
+  border: 2px solid $border;
+  color: $text;
+  font-size: 0.8rem;
+  font-family: $font-base;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  .material-symbols-outlined { font-size: 1.1rem; }
+  &:hover:not(:disabled) { border-color: $accent; color: $accent; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+  &.is-submit { margin-left: auto; }
+}
+
+.daily-compose-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: $text-muted;
+  &.is-error { color: $accent; }
+}
+
+body.is-admin .daily-entry-del {
+  display: inline-block;
+  padding: 0 6px;
+  background: none;
+  border: 1px solid rgba($border, 0.5);
+  color: $text-muted;
+  font-family: $font-base;
+  font-size: 0.72rem;
+  cursor: pointer;
+  &:hover { border-color: $accent; color: $accent; }
+}
+
 // daily/pippi 모바일 — 큰 패딩·들여쓰기 축소 + 페이저 터치 타깃 확보
 @media (max-width: 768px) {
   .daily-entry { padding: 14px 14px; }
   .daily-entry-body { padding-left: 6px; font-size: 1rem; }
   .daily-pager-btn { padding: 10px 18px; }
+  .daily-media,
+  .daily-carousel { margin-left: 0; }
+  body.is-admin .daily-compose { padding: 14px; }
+  .daily-compose-btn { padding: 10px 16px; }
+  body.is-admin .daily-entry-del { padding: 4px 10px; }
 }
 
 // ═══════════════════════════════════════

@@ -10,6 +10,20 @@ permalink: /daily/
 
   <h1 class="page-heading"><span class="page-heading-icon material-symbols-outlined" aria-hidden="true">edit_note</span>daily</h1>
 
+  <!-- 관리자 전용 작성 칸 — body.is-admin 에서만 표시 (daily-compose.js) -->
+  <form class="daily-compose" id="daily-compose" autocomplete="off">
+    <textarea class="daily-compose-text" id="daily-compose-text" rows="3" placeholder="&gt; 오늘의 기록…"></textarea>
+    <div class="daily-compose-thumbs" id="daily-compose-thumbs"></div>
+    <div class="daily-compose-bar">
+      <label class="daily-compose-btn">
+        <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>사진
+        <input type="file" id="daily-compose-file" accept="image/*" multiple hidden>
+      </label>
+      <span class="daily-compose-status" id="daily-compose-status" role="status"></span>
+      <button type="submit" class="daily-compose-btn is-submit" id="daily-compose-submit">게시</button>
+    </div>
+  </form>
+
   <div class="daily-feed" id="daily-feed">
     <p class="daily-loading">불러오는 중…</p>
   </div>
