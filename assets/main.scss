@@ -1750,6 +1750,18 @@ body.is-home .main-content {
   letter-spacing: 0.05em;
 }
 
+// 우측 개인정보처리방침 링크
+.footer-link {
+  margin-left: auto;
+  padding: 0 6px;
+  color: $surface;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+
+  &:hover { color: #000; text-decoration: underline; }
+}
+
 // ═══════════════════════════════════════
 // Category Tabs
 // ═══════════════════════════════════════
@@ -2528,6 +2540,8 @@ div.highlighter-rouge {
     font-size: 0.85rem;
     white-space: nowrap;
   }
+  // copyright가 margin-left:auto로 우측을 차지하므로 privacy 링크는 그 뒤에 붙인다
+  .footer-link { margin-left: 4px; padding: 0 2px 0 6px; }
 
   // 푸터 소셜 아이콘 — 26x22px 터치 미달. 간격 + 보이지 않는 히트 영역 확장
   .footer-social {
