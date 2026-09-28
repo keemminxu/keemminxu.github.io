@@ -1,4 +1,4 @@
-// 통합 검색 (search.exe) — 포스트는 search.json, daily/pippi는 Supabase REST(ilike)로 검색.
+// 통합 검색 (search.exe) — 포스트는 search.json, daily는 Supabase REST(ilike)로 검색.
 // UI는 홈에만 렌더되므로 다른 페이지에서는 요소가 없어 바로 종료된다.
 document.addEventListener('DOMContentLoaded', function () {
   var box = document.querySelector('.home-search');
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function searchSupabase(table, q) {
     if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve([]);
     // PostgREST 예약 문자는 공백으로, LIKE 와일드카드(% _ \)는 백슬래시 이스케이프
-    // (공백 치환하면 bot_muse 같은 스네이크케이스 검색이 깨진다)
+    // (공백 치환하면 스네이크케이스 검색어가 깨진다)
     var safe = q.replace(/[,()"'*]/g, ' ')
       .replace(/([\\%_])/g, '\\$1')
       .replace(/\s+/g, ' ')
@@ -103,13 +103,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function render(q, postHits, dailyHits, pippiHits) {
+  function render(q, postHits, dailyHits) {
     // 재렌더 전 ↑↓로 고른 항목을 기억해뒀다가 같은 항목이 있으면 선택 복원
     var prevActive = results.querySelector('.search-item.is-active');
     var prevHref = prevActive ? prevActive.getAttribute('href') : null;
 
     results.innerHTML = '';
-    if (postHits.length + dailyHits.length + pippiHits.length === 0) {
+    if (postHits.length + dailyHits.length === 0) {
       results.appendChild(el('div', 'search-empty', '검색 결과가 없습니다.'));
       results.classList.add('is-open');
       return;
@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
     addFeedGroup('daily', '/daily/', dailyHits, q);
-    addFeedGroup('ai_daily', '/pippi/', pippiHits, q);
 
     if (prevHref) {
       var items = results.querySelectorAll('.search-item');
@@ -159,11 +158,10 @@ document.addEventListener('DOMContentLoaded', function () {
       Promise.all([
         // 인덱스 로드가 끝난 뒤 포스트를 검색해야 첫 검색에서 결과가 빠지지 않는다
         loadIndex().then(function () { return searchPosts(q); }).catch(function () { return []; }),
-        searchSupabase('daily_logs', q),
-        searchSupabase('bot_muse', q)
+        searchSupabase('daily_logs', q)
       ]).then(function (r) {
         if (my !== seq) return;
-        render(q, r[0], r[1], r[2]);
+        render(q, r[0], r[1]);
       });
     }, 250);
   });

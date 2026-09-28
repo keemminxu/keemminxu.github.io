@@ -1,6 +1,6 @@
 {% comment %}
   통합 검색 — 홈 콘솔(모니터) 위 DOS 윈도우 스타일.
-  포스트는 search.json, daily/pippi는 Supabase REST(ilike)로 검색한다. search.js가 구동.
+  포스트는 search.json, daily는 Supabase REST(ilike)로 검색한다. search.js가 구동.
 {% endcomment %}
 <div class="home-search"
   data-supabase-url="{{ site.supabase_url }}"
@@ -11,7 +11,7 @@
     </div>
     <div class="search-input-row">
       <span class="search-prompt" aria-hidden="true">&gt;</span>
-      <input id="search-input" type="text" placeholder="검색: 글 · daily · ai_daily" autocomplete="off" spellcheck="false" aria-label="블로그 통합 검색">
+      <input id="search-input" type="text" placeholder="검색: 글 · daily" autocomplete="off" spellcheck="false" aria-label="블로그 통합 검색">
     </div>
     <div class="search-results" id="search-results"></div>
   </div>

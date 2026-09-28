@@ -19,7 +19,7 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
 
-# Supabase (읽기 전용 anon key — daily/pippi 피드 및 통합 검색에서 사용)
+# Supabase (읽기 전용 anon key — daily 피드 및 통합 검색에서 사용)
 supabase_url: "https://mnatdbpscbvhhsxstvaq.supabase.co"
 supabase_anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uYXRkYnBzY2J2aGhzeHN0dmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MDY4MzAsImV4cCI6MjA5MDQ4MjgzMH0.8iItsIbd06Sbi0PSt_4FAVGlEd8YdsTWL3xztszVieE"
 
