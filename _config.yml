@@ -13,6 +13,21 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+  # 태그 페이지는 대부분 글 1개짜리 목록 → 색인·사이트맵 제외
+  - scope:
+      path: "tag"
+    values:
+      noindex: true
+      sitemap: false
+  # 검색엔진 소유 확인 파일은 사이트맵에서 제외
+  - scope:
+      path: "googleba81d079cd9969d8.html"
+    values:
+      sitemap: false
+  - scope:
+      path: "naver9f205e9e8a5ff5655174021b6fef2db0.html"
+    values:
+      sitemap: false
 
 plugins:
   - jekyll-seo-tag

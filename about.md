@@ -68,4 +68,9 @@ permalink: /about/
     </div>
   </section>
 
+  <section class="about-section">
+    <h2 class="about-heading"><span class="about-heading-icon" aria-hidden="true">📮</span>contact</h2>
+    <p class="about-contact"><a href="mailto:cuzziman@gmail.com">cuzziman@gmail.com</a></p>
+  </section>
+
 </div>

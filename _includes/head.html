@@ -18,6 +18,11 @@
   <link rel="preload" href="{{ '/assets/fonts/HBIOS-SYS/HBIOS-SYS.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
   {%- seo -%}
 
+  <!-- 태그 목록·daily처럼 본문이 얇은 페이지는 검색 색인에서 제외 (링크는 따라가게 follow) -->
+  {% if page.noindex %}
+    <meta name="robots" content="noindex, follow">
+  {% endif %}
+
   <!-- OG Image (jekyll-seo-tag가 page.image 미설정 시 og:image를 생성하지 않으므로 직접 추가) -->
   {% if page.id %}
     <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/og/{{ page.slug }}.png">
