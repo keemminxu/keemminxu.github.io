@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ page.lang | default: site.lang | default: 'ko' }}">
   {%- include head.html -%}
-  <body class="layout-{{ page.layout | default: 'page' }}{% if page.url == '/' %} is-home{% endif %}{% if page.url == '/daily/' or page.url == '/pippi/' %} is-daily{% endif %}">
+  <body class="layout-{{ page.layout | default: 'page' }}{% if page.url == '/' %} is-home{% endif %}{% if page.url == '/daily/' %} is-daily{% endif %}">
     {%- include header.html -%}
 
     <div class="site-container">

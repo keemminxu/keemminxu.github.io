@@ -3956,7 +3956,7 @@ body.is-admin .daily-entry-del {
   &:hover { border-color: $accent; color: $accent; }
 }
 
-// daily/pippi 모바일 — 큰 패딩·들여쓰기 축소 + 페이저 터치 타깃 확보
+// daily 모바일 — 큰 패딩·들여쓰기 축소 + 페이저 터치 타깃 확보
 @media (max-width: 768px) {
   .daily-entry { padding: 14px 14px; }
   .daily-entry-body { padding-left: 6px; font-size: 1rem; }
