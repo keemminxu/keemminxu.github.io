@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!content) return;
 
     var btn = form.querySelector('.comment-submit');
+    var label = btn.textContent;
     btn.disabled = true;
     btn.textContent = '등록 중...';
 
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .finally(function() {
       btn.disabled = false;
-      btn.textContent = '등록';
+      btn.textContent = label;
     });
   });
 

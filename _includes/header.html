@@ -1,6 +1,22 @@
+{%- comment -%}
+  상단바 — 좌: 블로그명 + DOS 경로 / 가운데: 상태(위치·날짜·날씨·시각) / 우: 테마 전환 + 창 버튼
+{%- endcomment -%}
+{%- assign tb_seg = page.url | split: '/' | last | default: 'home' -%}
+{%- if page.url == '/' -%}
+  {%- assign tb_path = 'C:\KEEM\HOME' -%}
+{%- elsif page.layout == 'post' -%}
+  {%- assign tb_path = 'C:\KEEM\POSTS\' | append: page.categories[0] -%}
+{%- elsif page.url contains '/category/' -%}
+  {%- assign tb_path = 'C:\KEEM\POSTS\' | append: tb_seg -%}
+{%- else -%}
+  {%- assign tb_path = 'C:\KEEM\' | append: tb_seg -%}
+{%- endif -%}
+{%- assign tb_path = tb_path | upcase | replace: 'UNREALENGINE', 'UNREAL' -%}
 <header class="top-bar">
   <div class="top-bar-inner">
     <button class="menu-toggle" aria-label="Menu" onclick="toggleSidebar()">menu</button>
+    <a class="top-bar-brand" href="{{ '/' | relative_url }}">keem's blog.</a>
+    <span class="top-bar-path">{{ tb_path }}</span>
     <span class="top-bar-title">
       <span class="top-bar-status">
         <span class="status-loc">Seoul, Korea</span>
@@ -12,6 +28,18 @@
         <span id="status-time">--:--:--</span>
       </span>
     </span>
+    <div class="theme-switch" role="group" aria-label="테마 선택">
+      <button type="button" class="window-btn theme-btn" data-theme-set="dark" aria-pressed="false">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>DARK
+      </button>
+      <button type="button" class="window-btn theme-btn" data-theme-set="light" aria-pressed="true">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>LIGHT
+      </button>
+    </div>
+    <button type="button" class="window-btn theme-toggle" data-theme-toggle aria-label="테마 전환">
+      <svg class="theme-toggle-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="theme-toggle-sun" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+    </button>
     <div class="window-controls">
       <button class="window-btn" aria-label="Minimize" type="button" onclick="closeSidebar()">─</button>
       <button class="window-btn" aria-label="Maximize" type="button" onclick="openSidebar()">▢</button>

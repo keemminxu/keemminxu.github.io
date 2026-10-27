@@ -2,20 +2,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- 페이지 이동 시 사이드바 상태 즉시 복원 (FOUC/flicker 방지) -->
+  <!-- 첫 페인트 전에 테마(기본 light)·사이드바 상태 복원 (FOUC/flicker 방지) -->
   <script>
     (function () {
+      var root = document.documentElement;
+      var theme = 'light';
       try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark' || saved === 'light') theme = saved;
         if (localStorage.getItem('sidebar_open') === '1') {
-          document.documentElement.classList.add('sidebar-preopen');
+          root.classList.add('sidebar-preopen');
         }
       } catch (e) {}
+      root.setAttribute('data-theme', theme);
     })();
   </script>
   <meta name="google-site-verification" content="MU5Kvlk3YqYMb6Jqinv-Ex2oF1FhnP9Btj2LcG4Y_tE" />
   <meta name="google-adsense-account" content="ca-pub-3365788439910856">
   <link rel="icon" type="image/x-icon" href="{{ '/favicon.ico' | relative_url }}">
-  <link rel="preload" href="{{ '/assets/fonts/HBIOS-SYS/HBIOS-SYS.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ '/assets/fonts/NeoDunggeunmo/NeoDunggeunmoPro-Regular.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ '/assets/fonts/ChaiHwaljjak/ChaiHwaljjak-Bold.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ '/assets/fonts/BlogPixelSans/BlogPixelSans.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
   {%- seo -%}
 
   <!-- 태그 목록·daily처럼 본문이 얇은 페이지는 검색 색인에서 제외 (링크는 따라가게 follow) -->
@@ -63,9 +70,11 @@
      crossorigin="anonymous"></script>
 
   <!-- Page Scripts -->
+  <script defer src="{{ '/assets/js/theme.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/search.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/paginate.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/sidebar.js' | relative_url }}"></script>
+  <script defer src="{{ '/assets/js/led-sign.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/topbar-status.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/admin.js' | relative_url }}"></script>
   <script defer src="{{ '/assets/js/admin-editor.js' | relative_url }}"></script>

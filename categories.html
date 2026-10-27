@@ -4,7 +4,8 @@ title: Categories
 permalink: /categories/
 ---
 
-<div class="categories-index">
+<div class="categories-index list-page">
+  {% include list-header.html code="ALL" label="posts" path="POSTS" up="/" count=site.posts.size %}
 
   <div class="post-list">
     {% for post in site.posts %}

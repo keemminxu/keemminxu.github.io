@@ -4,8 +4,9 @@ title: "Category: Godot"
 permalink: /category/godot/
 ---
 
-<div class="category-page">
-  <h1 class="page-heading"><span class="page-heading-icon nav-child-logo nav-child-logo--godot" aria-hidden="true"></span>godot</h1>
+<div class="category-page list-page">
+  {%- assign list_count = site.categories['godot'].size | default: 0 -%}
+  {% include list-header.html code="GD" label="godot" path="POSTS\GODOT" up="/category/tech/" count=list_count %}
 
   <div class="post-list">
     {% assign posts = site.categories['godot'] | sort: 'date' | reverse %}

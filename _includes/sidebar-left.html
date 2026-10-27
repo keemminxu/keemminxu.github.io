@@ -1,3 +1,10 @@
+{%- comment -%} 카테고리별 글 수 — tech 는 하위 5개 카테고리 합집합 (category/tech.html 과 같은 계산) {%- endcomment -%}
+{%- assign tech_cats = "unrealengine,unity,godot,study,etc" | split: "," -%}
+{%- assign tech_posts = "" | split: "" -%}
+{%- for cat in tech_cats -%}
+  {%- if site.categories[cat] -%}{%- assign tech_posts = tech_posts | concat: site.categories[cat] -%}{%- endif -%}
+{%- endfor -%}
+{%- assign tech_posts = tech_posts | uniq -%}
 <aside class="sidebar-left">
   <div class="sidebar-titlebar">
     <span class="sidebar-titlebar-title">hello world!</span>
@@ -9,9 +16,10 @@
   </div>
   <div class="sidebar-left-inner">
     <div class="profile-section">
-      <div class="neon-sign" role="img" aria-label="OPEN 24 HOURS">
-        <img class="neon-sign-off" src="{{ '/assets/images/lefttab/SIGN_OFF.png' | relative_url }}" alt="" draggable="false">
-        <img class="neon-sign-on" src="{{ '/assets/images/lefttab/SIGN_ON.png' | relative_url }}" alt="" draggable="false">
+      {%- comment -%} LED 전광판 — 화면 칸은 led-sign.js 가 캔버스로 그린다 (OPEN 24 HOURS 네온 + 산책하는 몽구) {%- endcomment -%}
+      <div class="led-sign" role="img" aria-label="keem's blog. OPEN 24 HOURS — 강아지 몽구가 산책하는 LED 전광판">
+        <img src="{{ '/assets/images/lefttab/LED_SIGN.png' | relative_url }}" alt="" width="640" height="321" draggable="false">
+        <canvas class="led-sign-screen" aria-hidden="true"></canvas>
       </div>
     </div>
 
@@ -31,32 +39,43 @@
         <span class="nav-icon material-symbols-outlined" aria-hidden="true">terminal</span>
         tech
         <span class="nav-marker" aria-hidden="true">*</span>
+        <span class="nav-count">{{ tech_posts.size }}</span>
       </a>
       <div class="nav-sub is-open">
         <a href="{{ '/category/unrealengine' | relative_url }}" class="nav-child {% if page.url contains 'unrealengine' %}active{% endif %}">
+          <span class="nav-tree" aria-hidden="true">├─</span>
           <span class="nav-child-icon nav-child-logo nav-child-logo--unreal" aria-hidden="true"></span>
           unreal
           <span class="nav-marker" aria-hidden="true">*</span>
+          <span class="nav-count">{{ site.categories['unrealengine'].size | default: 0 }}</span>
         </a>
         <a href="{{ '/category/unity' | relative_url }}" class="nav-child {% if page.url contains 'unity' %}active{% endif %}">
+          <span class="nav-tree" aria-hidden="true">├─</span>
           <span class="nav-child-icon nav-child-logo nav-child-logo--unity" aria-hidden="true"></span>
           unity
           <span class="nav-marker" aria-hidden="true">*</span>
+          <span class="nav-count">{{ site.categories['unity'].size | default: 0 }}</span>
         </a>
         <a href="{{ '/category/godot' | relative_url }}" class="nav-child {% if page.url contains 'godot' %}active{% endif %}">
+          <span class="nav-tree" aria-hidden="true">├─</span>
           <span class="nav-child-icon nav-child-logo nav-child-logo--godot" aria-hidden="true"></span>
           godot
           <span class="nav-marker" aria-hidden="true">*</span>
+          <span class="nav-count">{{ site.categories['godot'].size | default: 0 }}</span>
         </a>
         <a href="{{ '/category/study' | relative_url }}" class="nav-child {% if page.url contains 'study' %}active{% endif %}">
+          <span class="nav-tree" aria-hidden="true">├─</span>
           <span class="nav-child-icon material-symbols-outlined" aria-hidden="true">menu_book</span>
           study
           <span class="nav-marker" aria-hidden="true">*</span>
+          <span class="nav-count">{{ site.categories['study'].size | default: 0 }}</span>
         </a>
         <a href="{{ '/category/etc' | relative_url }}" class="nav-child {% if page.url contains '/category/etc' %}active{% endif %}">
+          <span class="nav-tree" aria-hidden="true">└─</span>
           <span class="nav-child-icon material-symbols-outlined" aria-hidden="true">folder</span>
           etc
           <span class="nav-marker" aria-hidden="true">*</span>
+          <span class="nav-count">{{ site.categories['etc'].size | default: 0 }}</span>
         </a>
       </div>
 

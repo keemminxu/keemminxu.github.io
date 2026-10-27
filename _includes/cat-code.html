@@ -1,0 +1,13 @@
+{%- comment -%}
+  카테고리 → 2글자 코드 칩 (DIR 목록·카드·글 헤더 공용).
+  cat 파라미터에는 categories 첫 값을 변수에 담아 넘긴다 (Jekyll 3 include 는 [0] 인덱스 표기를 못 받음).
+{%- endcomment -%}
+{%- case include.cat -%}
+  {%- when 'unrealengine' -%}{%- assign cc = 'UE' -%}
+  {%- when 'unity' -%}{%- assign cc = 'UN' -%}
+  {%- when 'godot' -%}{%- assign cc = 'GD' -%}
+  {%- when 'study' -%}{%- assign cc = 'ST' -%}
+  {%- when 'etc' -%}{%- assign cc = 'ET' -%}
+  {%- else -%}{%- assign cc = include.cat | slice: 0, 2 | upcase -%}
+{%- endcase -%}
+<span class="cat-code{% if include.class %} {{ include.class }}{% endif %}">{{ cc }}</span>

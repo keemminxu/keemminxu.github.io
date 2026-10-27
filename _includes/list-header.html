@@ -1,0 +1,29 @@
+{%- comment -%}
+  글 목록 페이지(카테고리·태그) 상단 — 탐색기 툴바(뒤로·상위·주소·정렬·보기) + 제목.
+  정렬/보기 전환은 paginate.js 가 처리한다.
+  파라미터: code(칩 글자) · label(제목) · path(C:\KEEM\ 뒤 경로) · up(상위 폴더 URL) · count(글 수)
+{%- endcomment -%}
+{%- assign lh_up = include.up | default: '/' -%}
+<div class="explorer-bar">
+  <button type="button" class="window-btn explorer-btn" aria-label="뒤로" onclick="history.back()">◀</button>
+  <a class="window-btn explorer-btn" href="{{ lh_up | relative_url }}" aria-label="상위 폴더">↑</a>
+  <span class="explorer-address">C:\KEEM\{{ include.path }}\</span>
+  <label class="explorer-sort">정렬
+    <select data-list-sort>
+      <option value="desc">최신순</option>
+      <option value="asc">오래된순</option>
+    </select>
+  </label>
+  <div class="explorer-views" role="group" aria-label="보기 방식">
+    <button type="button" class="window-btn explorer-btn" data-list-view="list" aria-pressed="false" aria-label="리스트 보기">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <button type="button" class="window-btn explorer-btn" data-list-view="grid" aria-pressed="true" aria-label="카드 보기">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>
+    </button>
+  </div>
+</div>
+<div class="list-heading">
+  <h1 class="page-heading"><span class="cat-code cat-code--lg">{{ include.code }}</span>{{ include.label }}</h1>
+  <span class="list-count">{{ include.count | default: 0 }} File(s)</span>
+</div>

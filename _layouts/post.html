@@ -1,24 +1,45 @@
 ---
 layout: default
 ---
+{%- assign post_cat = page.categories | first -%}
+{%- assign post_cat_label = post_cat | replace: 'unrealengine', 'unreal' -%}
+{%- assign h2_count = content | split: '<h2' | size | minus: 1 -%}
+<div class="read-progress" aria-hidden="true"><span class="read-progress-fill" id="read-progress-fill"></span></div>
+
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <nav class="post-breadcrumb" aria-label="경로">
+    <a href="{{ '/' | relative_url }}">home</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ '/category/tech/' | relative_url }}">tech</a>
+    {%- if post_cat %}
+    <span aria-hidden="true">/</span>
+    <a href="{{ '/category/' | append: post_cat | append: '/' | relative_url }}">{{ post_cat_label }}</a>
+    {%- endif %}
+    <span aria-hidden="true">/</span>
+    <span class="post-breadcrumb-file">{{ page.slug }}.md</span>
+  </nav>
+
   <header class="post-header">
+      <p class="post-meta">
+        {%- if post_cat %}
+        {% include cat-code.html cat=post_cat %}
+        <a href="{{ '/category/' | append: post_cat | append: '/' | relative_url }}">{{ post_cat_label }}</a>
+        <span aria-hidden="true">·</span>
+        {%- endif %}
+        <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%Y-%m-%d" }}</time>
+        {%- if h2_count > 0 %}
+        <span aria-hidden="true">·</span>
+        <span>{{ h2_count }} sections</span>
+        {%- endif %}
+      </p>
       <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
       {% if page.title_en %}
         <p class="post-title-en">{{ page.title_en }}</p>
       {% endif %}
-      <p class="post-meta">
-        <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-          {{ page.date | date: "%Y-%m-%d" }}
-        </time>
-        {% if page.categories.size > 0 %}
-          · <a href="{{ '/category/' | append: page.categories[0] | relative_url }}">{{ page.categories[0] }}</a>
-        {% endif %}
-      </p>
       {% if page.tags.size > 0 %}
       <div class="post-tags">
         {% for tag in page.tags %}
-          <a href="{{ '/tag/' | append: tag | relative_url }}" class="tag-link">{{ tag }}</a>
+          <a href="{{ '/tag/' | append: tag | relative_url }}" class="tag-link">#{{ tag }}</a>
         {% endfor %}
       </div>
       {% endif %}
@@ -28,17 +49,46 @@ layout: default
       {{ content }}
     </div>
 
-    <!-- 플로팅 TOC (PC 뷰) — toc.js 가 헤딩 추출해 채움 -->
+    <!-- 플로팅 TOC (PC 뷰) — toc.js 가 헤딩 추출·읽기 진행률 갱신 -->
     <aside class="floating-toc" aria-label="Table of contents">
       <div class="floating-toc-titlebar">
         <span class="floating-toc-titlebar-text">CONTENTS</span>
       </div>
+      <div class="toc-progress" aria-hidden="true">
+        <span class="toc-progress-bar"><span class="toc-progress-fill" id="toc-progress-fill"></span></span>
+        <span class="toc-progress-text" id="toc-progress-text">0%</span>
+      </div>
       <ul id="toc-list" class="toc-list"></ul>
+      <div class="toc-actions">
+        <button type="button" class="window-btn" data-copy-link>링크 복사</button>
+        <button type="button" class="window-btn" data-scroll-top>↑ 맨 위로</button>
+      </div>
     </aside>
 
-  {% include comments.html %}
+  <p class="post-eof">── EOF · {{ page.slug }}.md ──</p>
+
+  {%- if page.previous or page.next %}
+  <nav class="post-nav" aria-label="이전·다음 글">
+    {%- if page.previous %}
+    <a class="post-nav-link post-nav-prev" href="{{ page.previous.url | relative_url }}">
+      <span class="post-nav-label">◀ 이전 글 · {{ page.previous.date | date: "%Y.%m.%d" }}</span>
+      <span class="post-nav-title">{{ page.previous.title | escape }}</span>
+    </a>
+    {%- else %}
+    <span class="post-nav-link is-empty" aria-hidden="true"></span>
+    {%- endif %}
+    {%- if page.next %}
+    <a class="post-nav-link post-nav-next" href="{{ page.next.url | relative_url }}">
+      <span class="post-nav-label">{{ page.next.date | date: "%Y.%m.%d" }} · 다음 글 ▶</span>
+      <span class="post-nav-title">{{ page.next.title | escape }}</span>
+    </a>
+    {%- endif %}
+  </nav>
+  {%- endif %}
 
   {% include related-posts.html %}
+
+  {% include comments.html %}
 
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 </article>
