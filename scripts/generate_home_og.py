@@ -18,8 +18,11 @@ OUTPUT = BLOG_ROOT / "assets" / "og" / "home-og.png"
 
 WIDTH, HEIGHT = 1200, 630
 
-BG = (22, 19, 17)          # #161311
-PRIMARY = (255, 225, 167)   # #ffe1a7
+# 블로그 다크 테마 토큰과 같은 차가운 톤 (모니터 일러스트도 블루그레이)
+BG = (28, 29, 32)           # #1c1d20 (--bg)
+SCANLINE = (34, 35, 39)
+SHADOW = (11, 12, 14)       # #0b0c0e (--shadow)
+PRIMARY = (228, 228, 234)   # #e4e4ea (--text)
 ACCENT = (203, 160, 64)     # #cba040 (사이트 앰버)
 MUTED = (138, 129, 119)
 
@@ -33,7 +36,7 @@ draw = ImageDraw.Draw(img)
 
 # 배경 스캔라인
 for y in range(0, HEIGHT, 4):
-    draw.line([(0, y), (WIDTH, y)], fill=(27, 24, 22), width=1)
+    draw.line([(0, y), (WIDTH, y)], fill=SCANLINE, width=1)
 
 # --- 콘솔 TV + 화면 합성 (원본 해상도에서 합성 후 축소) ---
 console = Image.open(CONSOLE).convert("RGBA")
@@ -70,7 +73,7 @@ tb = draw.textbbox((0, 0), title, font=font_title)
 tw, th = tb[2] - tb[0], tb[3] - tb[1]
 tx = text_x + (right_w - tw) // 2 - tb[0]
 ty = (HEIGHT - th) // 2 - tb[1]
-draw.text((tx + 4, ty + 4), title, font=font_title, fill=(10, 8, 6))   # shadow
+draw.text((tx + 4, ty + 4), title, font=font_title, fill=SHADOW)   # shadow
 draw.text((tx, ty), title, font=font_title, fill=PRIMARY)
 
 # 외곽 CRT 프레임 라인
