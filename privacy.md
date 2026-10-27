@@ -52,7 +52,11 @@ keem's blog(keemminxu.com, 이하 "블로그")가 방문자 정보를 무엇을,
 - 운영자: 김민수 (keemminxu)
 - 이메일: [cuzziman@gmail.com](mailto:cuzziman@gmail.com)
 
-## 7. 변경
+## 7. 글꼴 출처
+
+이 블로그에는 차이에서 제공한 [차이 활짝체](https://www.artistchai.co.kr)가 적용되어 있습니다.
+
+## 8. 변경
 
 이 방침이 바뀌면 이 페이지에 반영하고 시행일을 고칩니다.
 
