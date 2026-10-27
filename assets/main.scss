@@ -2,16 +2,17 @@
 ---
 
 // Custom Font
+// 화면 틀 폰트(Neo둥근모 Pro)에 없는 화살표·기호(← ↑ → ※ ✓ ≤ …)만 HBIOS-SYS 에서 떼어 온 2KB 보조 폰트
+// 같은 16px 격자·반각 폭이라 섞여도 티가 안 난다 (scripts/subset_fonts.py --symbols)
 @font-face {
-  font-family: 'HBIOS-SYS';
-  src: url('/assets/fonts/HBIOS-SYS/HBIOS-SYS.woff2') format('woff2'),
-       url('/assets/fonts/HBIOS-SYS/HBIOS-SYS.ttf') format('truetype');
+  font-family: 'HBIOS-SYS Symbols';
+  src: url('/assets/fonts/HBIOS-SYS/HBIOS-SYS-symbols.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-// Pixel Emoji — 이모지 unicode-range에만 적용되어 본문은 HBIOS-SYS 유지
+// Pixel Emoji — 이모지 unicode-range에만 적용되어 나머지 글자는 앞 폰트 유지
 @font-face {
   font-family: 'Mona12Emoji';
   src: url('/assets/fonts/Mona12Emoji/Mona12Emoji.woff2') format('woff2');
@@ -22,42 +23,185 @@
   unicode-range: U+1F000-1FFFF, U+2600-26FF, U+2700-27BF, U+2300-23FF, U+FE00-FE0F, U+20D0-20FF, U+2190-21FF, U+2460-24FF, U+25A0-25FF;
 }
 
-// ═══════════════════════════════════════
-// Design Tokens — MS-DOS monochrome (#AAAAAA / #000000)
-// ═══════════════════════════════════════
-$bg: #1c1d20;          // 고급스러운 dark — pure black 대신 살짝 파란 그레이
-$surface: #1c1d20;
-$surface-high: #2a2b2e;
-$surface-highest: #34353a;
-$surface-lowest: #131418;
-$text: #C0C0C0;
-$text-muted: #909090;   // #666666에서 상향 — 다크 배경(#1c1d20) 대비 약 5.3:1 (WCAG AA 충족)
-$primary: #FFFFFF;
-$amber: #CBA040;     // muted gold — 포스트 헤딩과 동일 톤 (구 #FFFF00 대체)
-$primary-container: #C0C0C0;
-$accent: #FFFFFF;
-$accent-hover: #CCCCCC;
-$border: #C0C0C0;
-$secondary: #888888;
-$secondary-container: #333333;
+// 화면 틀 기본 픽셀 폰트($font-base) — 16px 격자, 반각 0.5em·전각 1em 고정폭. LED 전광판(led-sign.js)도 사용
+@font-face {
+  font-family: 'NeoDunggeunmo';
+  src: url('/assets/fonts/NeoDunggeunmo/NeoDunggeunmoPro-Regular.woff2') format('woff2'),
+       url('/assets/fonts/NeoDunggeunmo/NeoDunggeunmoPro-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-$font-base: 'HBIOS-SYS', 'Mona12Emoji', -apple-system, BlinkMacSystemFont, sans-serif;
+// 제목·큰 글자 — 차이 활짝체 Bold 한 벌 (쓰는 글자만 남긴 서브셋: scripts/subset_fonts.py, 출처 표기: /privacy/)
+@font-face {
+  font-family: 'ChaiHwaljjak';
+  src: url('/assets/fonts/ChaiHwaljjak/ChaiHwaljjak-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+// 본문 도트 폰트 — Terrarum Sans Bitmap 서브셋 (OFL 예약 이름 조항으로 'Blog Pixel Sans'로 개명)
+// 1px = 50유닛 격자라 20px(또는 40px)에서만 도트가 화면 픽셀에 딱 맞는다
+@font-face {
+  font-family: 'BlogPixelSans';
+  src: url('/assets/fonts/BlogPixelSans/BlogPixelSans.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+// ═══════════════════════════════════════
+// Theme Tokens — html[data-theme] (head.html 인라인 스크립트가 지정, 기본 light)
+// LIGHT = WIN 클래식(중립 그레이 + 회색 크롬 + 네이비) / DARK = 기존 MS-DOS 다크
+// ═══════════════════════════════════════
+:root {
+  --bg: #E1E2E5;
+  --bg-dot: #CFD1D6;
+  --side: #D6D8DC;
+  --win: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-high: #E6E8EC;
+  --surface-highest: #D3D6DB;
+  --surface-lowest: #EEF0F2;
+  --row: #DCE3F7;
+  --line: #B9BCC2;
+  --line-rgb: 28, 29, 32;
+  --chip: #8E929A;
+  --chrome: #C0C0C0;
+  --chrome-fg: #1C1D20;
+  --chrome-dim: #45464B;
+  --frame: #1C1D20;
+  --shadow: #7A7E86;
+  --fg: #2A2C31;
+  --text: #16171A;
+  --bright: #0E0F11;
+  --muted: #54585F;
+  --sub: #4A4E56;
+  --accent: #1D3BB8;
+  --accent-fill: #1D3BB8;
+  --accent-on: #FFFFFF;
+  --h2: #1D3BB8;
+  --link: #1D3BB8;
+  --link-hover: #0E2A8F;
+  --code-bg: #ECEDEF;
+  --code-fg: #A1246B;
+  --term-bg: #0B0C0E;
+  --term-fg: #C0C0C0;
+  --term-text: #E4E4EA;
+  --term-dim: #909090;
+  --phosphor: #55FF55;
+  --tree: #8E929A;
+  --btn: #C0C0C0;
+  --btn-hi: #FFFFFF;
+  --btn-lo: #5A5A5A;
+  --btn-press: #A8A8A8;
+  --input-bg: #FFFFFF;
+  --input-fg: #16171A;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #1c1d20;
+  --bg-dot: #26272b;
+  --side: #18191c;
+  --win: #131418;
+  --surface: #1c1d20;
+  --surface-high: #2a2b2e;
+  --surface-highest: #34353a;
+  --surface-lowest: #131418;
+  --row: #2a2b2e;
+  --line: #3a3b40;
+  --line-rgb: 192, 192, 192;
+  --chip: #45464b;
+  --chrome: #C0C0C0;
+  --chrome-fg: #1c1d20;
+  --chrome-dim: #45464b;
+  --frame: #C0C0C0;
+  --shadow: #0b0c0e;
+  --fg: #C0C0C0;
+  --text: #E4E4EA;
+  --bright: #FFFFFF;
+  --muted: #909090;            // 다크 배경(#1c1d20) 대비 약 5.3:1 (WCAG AA)
+  --sub: #A8A8B0;
+  --accent: #CBA040;           // muted gold
+  --accent-fill: #CBA040;
+  --accent-on: #1c1d20;
+  --h2: #F4D97E;
+  --link: #55FF55;             // MS-DOS VGA bright green
+  --link-hover: #aaffaa;
+  --code-bg: rgba(143, 180, 232, 0.14);
+  --code-fg: #8FB4E8;
+  --term-bg: #0b0c0e;
+  --term-fg: #C0C0C0;
+  --term-text: #E4E4EA;
+  --term-dim: #909090;
+  --phosphor: #55FF55;
+  --tree: #55565c;
+  --btn: #C0C0C0;
+  --btn-hi: #ffffff;
+  --btn-lo: #5a5a5a;
+  --btn-press: #a8a8a8;
+  --input-bg: #0b0c0e;
+  --input-fg: #E4E4EA;
+  color-scheme: dark;
+}
+
+// SCSS 별칭 — 기존 규칙은 이 이름을 그대로 쓰고 값만 테마 변수로 바뀐다
+$bg: var(--bg);
+$win: var(--win);
+$surface: var(--surface);
+$surface-high: var(--surface-high);
+$surface-highest: var(--surface-highest);
+$surface-lowest: var(--surface-lowest);
+$text: var(--fg);
+$text-muted: var(--muted);
+$primary: var(--bright);
+$amber: var(--accent);
+$primary-container: var(--chrome);
+$accent: var(--bright);
+$accent-hover: var(--fg);
+$border: var(--chrome);
+$secondary: var(--muted);
+$secondary-container: var(--surface-highest);
+$chrome-fg: var(--chrome-fg);
+$shadow: var(--shadow);
+// Win95 베벨 — 크롬(타이틀바·버튼) 전용. 테마와 무관하게 회색 크롬 위 명암
+$bevel-hi: var(--btn-hi);
+$bevel-lo: var(--btn-lo);
+$bevel-edge: var(--chrome-fg);
+
+// 반투명 구분선 — rgba($border, a) 대체 (Sass 색상 함수는 CSS 변수를 못 받음)
+@function tone($alpha) {
+  @return unquote("rgba(var(--line-rgb), #{$alpha})");
+}
+
+$font-base: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Mona12Emoji', -apple-system, BlinkMacSystemFont, sans-serif;
 // 한글 폴백(맑은 고딕) 명시 — JetBrains Mono/Consolas엔 한글 글리프가 없어
 // 코드 주석·표의 한글이 브라우저 임의 폰트(굴림 등)로 렌더되는 것을 방지
 $font-code: 'JetBrains Mono', 'Consolas', 'Malgun Gothic', monospace;
+// 시스템 한글 폰트 스택 — 제목·본문 폰트의 폴백
+$font-post: -apple-system, BlinkMacSystemFont, 'Segoe UI', Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+// 제목·큰 글자 — Bold(700) 한 벌만 싣으므로 쓰는 곳에서 font-weight: 700
+$font-title: 'ChaiHwaljjak', $font-post;
+// 본문·발췌 도트 폰트 — $font-content-size 외의 크기에선 도트가 번지므로 크기를 바꾸지 않는다
+$font-content: 'BlogPixelSans', $font-post;
+$font-content-size: 20px;
 
 $max-width: 720px;
 $max-width-wide: 960px;
 $breakpoint-mobile: 768px;
 
-// Minima override variables
-$background-color: $bg;
-$text-color: $text;
-$brand-color: $accent;
-$brand-color-light: $accent-hover;
-$brand-color-dark: darken($accent, 15%);
+// Minima override variables — minima 내부가 darken()/lighten()을 쓰므로 리터럴 색 유지
+// (실제 화면 색은 아래 규칙들이 테마 변수로 덮어씀)
+$background-color: #1c1d20;
+$text-color: #C0C0C0;
+$brand-color: #FFFFFF;
+$brand-color-light: #CCCCCC;
+$brand-color-dark: darken(#FFFFFF, 15%);
 $base-font-family: $font-base;
-$site-title-color: $text;
+$site-title-color: #C0C0C0;
 
 @import "minima";
 
@@ -164,9 +308,10 @@ $site-title-color: $text;
   border-radius: 0px !important;
 }
 
-// 모든 글꼴 bold 제거 — 기본 굵은 태그도 일반 두께로
+// 기본 굵기 400 — th 는 본문 도트 폰트(볼드 없음)라 합성 볼드 차단
+// 헤딩은 아래 h1~h6 기본값(400)만 두고, 제목 폰트(차이 활짝체 Bold)를 쓰는 곳에서 700 을 준다
 // (strong/b 는 제외 — md **강조**가 죽는 원인이었음. 본문 강조는 .post-content에서 처리)
-body, h1, h2, h3, h4, h5, h6, th {
+body, th {
   font-weight: 400 !important;
 }
 
@@ -197,7 +342,6 @@ html::after { right: 0; }
 
 body {
   background-color: $bg;
-  background-image: radial-gradient(circle at center, #24262b 0%, #15161a 100%);
   color: $text;
   font-family: $font-base;
   font-weight: 300;
@@ -213,16 +357,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a {
-  color: #55FF55;            // MS-DOS VGA bright green
+  color: var(--link);        // dark: MS-DOS VGA bright green / light: 네이비
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.2s;
-  &:visited { color: #55FF55; }
-  &:hover { color: #aaffaa; }   // hover 시 더 밝게
+  &:visited { color: var(--link); }
+  &:hover { color: var(--link-hover); }
 }
 
 ::selection {
-  background-color: rgba($accent, 0.3);
+  background-color: var(--row);
   color: $text;
 }
 
@@ -256,15 +400,15 @@ img {
   left: 0;
   height: 28px;
   background-color: $border;          // 클래식 Win95 회색 (#C0C0C0)
-  color: $bg;
+  color: $chrome-fg;
   z-index: 100;
   display: flex;
   align-items: center;
   padding: 0 4px 0 6px;
   // 3D inset 외곽 (헤더가 윈도우 프레임처럼 보이도록)
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo;
 }
 
 .top-bar-inner {
@@ -282,7 +426,7 @@ img {
   pointer-events: none;
   font-family: $font-base;
   font-size: 1rem;
-  color: $bg;
+  color: $chrome-fg;
   letter-spacing: 0.03em;
   white-space: nowrap;
   text-align: center;
@@ -315,7 +459,7 @@ img {
   align-items: center;
   justify-content: center;
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   border: none;
   cursor: pointer;
   font-family: $font-base;
@@ -323,16 +467,16 @@ img {
   letter-spacing: 0.05em;
   // 3D outset (튀어나옴)
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    0 0 0 1px $bg;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    0 0 0 1px $bevel-edge;
 
   &:active {
     // 눌리면 inset (들어감)
     box-shadow:
-      inset -1px -1px 0 $primary,
-      inset 1px 1px 0 $text-muted,
-      0 0 0 1px $bg;
+      inset -1px -1px 0 $bevel-hi,
+      inset 1px 1px 0 $bevel-lo,
+      0 0 0 1px $bevel-edge;
   }
 }
 
@@ -428,13 +572,13 @@ img {
   height: 100dvh;
   // 320px대 초소형 화면에서도 백드롭 탭 영역 48px 확보 (≥348px에선 기존 300px 유지)
   width: min(300px, calc(100vw - 48px));
-  background-color: $bg;
+  background-color: var(--side);
   overflow: hidden;
   z-index: 200;
   padding: 0;
   // Win95 raised 윈도우 외곽 — 상/좌 light, 하/우 dark
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow: inset 1px 1px 0 $border, inset -1px -1px 0 $bg;
   box-sizing: border-box;
   display: flex;
@@ -472,8 +616,8 @@ img {
       background: linear-gradient(
         to bottom,
         transparent,
-        rgba($border, 0.25) 20%,
-        rgba($border, 0.25) 80%,
+        tone(0.25) 20%,
+        tone(0.25) 80%,
         transparent
       );
       pointer-events: none;
@@ -493,14 +637,14 @@ img {
   height: 28px;
   padding: 0 4px 0 6px;
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   font-family: $font-base;
   font-size: 0.95rem;
   letter-spacing: 0.03em;
   // 3D inset 외곽 (윈도우 타이틀 바 느낌)
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo;
 }
 
 .sidebar-titlebar-title {
@@ -543,60 +687,37 @@ img {
   padding: 16px 20px 0px;
 }
 
-// ── 네온사인 (OPEN 24 HOURS) — ON/OFF 이미지 교차 점멸 ──
-.neon-sign {
+// ── LED 전광판 — 블루그레이 케이스 이미지 + 화면 칸 캔버스 (led-sign.js) ──
+// 캔버스 위치는 LED_SIGN.png 원본(2224×1114) 기준 화면 칸 (178, 222) 1841×679px 의 비율
+.led-sign {
   position: relative;
-  width: 86%;
+  display: block;
+  width: 92%;
   margin: 4px auto 0;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.22));
 
-  .neon-sign-off,
-  .neon-sign-on {
+  img {
     display: block;
     width: 100%;
     height: auto;
     user-select: none;
   }
-
-  // 켜질 때 뒤에서 새어 나오는 빛 — ON 이미지와 동일 타이밍으로 점멸
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -16% -14%;
-    background: radial-gradient(
-      closest-side,
-      rgba(255, 214, 150, 0.26),
-      rgba(255, 130, 90, 0.12) 55%,
-      transparent 78%
-    );
-    opacity: 0;
-    animation: neon-blink 3.6s infinite;
-    pointer-events: none;
-  }
 }
 
-.neon-sign-on {
+.led-sign-screen {
   position: absolute;
-  inset: 0;
-  opacity: 0;
-  animation: neon-blink 3.6s infinite;
-  filter: drop-shadow(0 0 7px rgba(255, 170, 120, 0.55));
-}
-
-// 점등 순간 치직거리는 스터터 → 절반 켜짐 유지 → 소등
-@keyframes neon-blink {
-  0%, 3%   { opacity: 0; }
-  4%, 5%   { opacity: 1; }
-  6%, 8%   { opacity: 0; }
-  9%, 52%  { opacity: 1; }
-  53%, 100% { opacity: 0; }
+  left: 8.004%;
+  top: 19.928%;
+  width: 82.779%;
+  height: 60.952%;
 }
 
 @media (max-height: 800px) {
-  .neon-sign { width: 74%; }
+  .led-sign { width: 80%; }
 }
 
 @media (max-height: 680px) {
-  .neon-sign { width: 62%; }
+  .led-sign { width: 68%; }
 }
 
 // 프로필 프레임: 프레임 자체는 투명 — 스티커 앵커 + 레이아웃 용도만
@@ -657,7 +778,7 @@ img {
 .sidebar-bottom {
   margin-top: auto;
   padding: 16px 0 64px;
-  background: $bg;
+  background: $win;
 }
 
 // Toast notification
@@ -692,7 +813,7 @@ img {
 
 .sidebar-nav {
   a, a:visited {
-    color: $border;
+    color: $text;
     text-decoration: none;
   }
 }
@@ -703,7 +824,7 @@ img {
   align-items: center;
   gap: 18px;
   padding: 8px 30px;
-  color: $border !important;
+  color: $text !important;
   font-size: 1.2rem;
   //font-weight: regular;
   text-decoration: none;
@@ -947,36 +1068,99 @@ body.is-home .main-content {
 }
 
 // ═══════════════════════════════════════
-// Hero Section (Home)
+// Hero Section (Home) — 콘솔(좌) + search·README·plugins(우), 그 아래 글 목록
 // ═══════════════════════════════════════
 
-.hero-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0px 0 24px;
-  margin-bottom: 16px;
+.home {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 36px 56px;
+  box-sizing: border-box;
 }
 
-// home 페이지 글꼴 얇게 (가독성)
+// home 페이지 글꼴 얇게 (가독성) — 헤딩은 빼서 제목 클래스의 700(차이 활짝체 Bold)이 먹게
 .home,
-.home h1, .home h2, .home h3,
 .home p, .home a, .home time, .home span {
   font-weight: 300;
 }
 
-// 홈 인사말 — MS-DOS 박스 (recent posts와 동일 폭)
-// ── Fab 플러그인 미니 카드 (README 위) ──
-.home-plugins {
-  margin: 56px auto 0;
-  max-width: 720px;
-  padding: 0 16px;
+// 상단 2칸 — 오른쪽 칸이 콘솔 칸 높이에 맞춰 늘어나 위·아래 끝이 맞는다
+.home-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 36px;
 }
+
+.hero-section {
+  flex: 0 1 auto;
+  // 콘솔 칸 폭 — 420px 상한. 짧은 창에선 (가용 높이 / 콘솔 비율 1.634)로 역산해 한 화면 안에
+  width: min(420px, 100%, calc((100vh - 120px) / 1.634));
+  margin: 0 auto;
+}
+
+// 콘솔 PNG(1856×2304)의 투명 여백 — 좌우 각 14.2%, 위 3.5%, 아래 2.3% — 을 잘라내
+// 본체가 칸을 꽉 채우게 한다. hit area 는 frame 기준 % 좌표라 그대로 맞는다.
+.console-crop {
+  overflow: hidden;
+}
+
+.home-side {
+  flex: 999 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+// ── README.txt — 테마와 무관하게 어두운 터미널 창 ──
+// 오른쪽 칸 남는 높이를 README가 흡수 → 플러그인 카드 아래 끝이 콘솔 아래 끝과 맞는다
+.home-greeting {
+  flex: 1 1 auto;
+  display: flex;
+  margin: 0;
+}
+
+.greeting-box {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--frame);
+  background: var(--term-bg);
+  box-shadow: 4px 4px 0 $shadow;
+}
+
+.greeting-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $border;
+  color: $chrome-fg;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.greeting-titlebar-text {
+  font-family: $font-code;
+}
+
+// 인베이더 세 마리를 가로로 — 남는 높이 가운데에 오도록 본문이 창 높이를 채운다
+.greeting-body {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 16px 20px 18px;
+}
+
+// ── Fab 플러그인 카드 (README 아래) ──
+.home-plugins { margin: 0; }
 
 .home-plugins-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 28px;
 }
 
 .plugin-card {
@@ -984,25 +1168,26 @@ body.is-home .main-content {
   display: flex;
   flex-direction: column;
   text-decoration: none;
-  background: $bg;
-  border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
-  box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
+  color: $text;
+  background: $win;
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 $shadow;
   min-width: 0;
-  transition: filter 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 
-  &:hover { filter: brightness(1.3); }
+  &:hover {
+    color: $text;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 $shadow;
+  }
 }
 
 // 카드 모서리에 붙는 픽셀 스티커 (PNG 자체가 기울어져 있어 위치만 잡음)
 .plugin-card-sticker {
   position: absolute;
-  top: -14px;
+  top: -16px;
   left: -14px;
-  width: clamp(48px, 34%, 84px);
+  width: 68px;
   height: auto;
   z-index: 2;
   pointer-events: none;
@@ -1010,11 +1195,10 @@ body.is-home .main-content {
 
 .plugin-card-titlebar {
   background: $border;
-  color: $bg;
-  padding: 2px 8px;
-  font-size: 0.7rem;
+  color: $chrome-fg;
+  padding: 2px 8px 2px 60px;   // 스티커 자리
+  font-size: 0.72rem;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid $text-muted;
   font-family: $font-code;
   white-space: nowrap;
   overflow: hidden;
@@ -1027,74 +1211,56 @@ body.is-home .main-content {
   background: $surface-high;
   overflow: hidden;
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 }
 
-.home-greeting {
-  margin: 32px auto 0;
-  max-width: 720px;
-  padding: 0 16px;
+.plugin-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
 }
 
-// 섹션 사이 은은한 가로 경계선 — 사이드바 세로 경계선과 동일 톤
-.home-greeting::before,
-.latest-posts::before {
-  content: '';
-  display: block;
-  height: 1px;
-  margin-bottom: 24px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba($border, 0.25) 18%,
-    rgba($border, 0.25) 82%,
-    transparent
-  );
-}
-
-.greeting-box {
-  border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
-  background: $bg;
-  box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
-}
-
-.greeting-titlebar {
-  background: $border;
-  color: $bg;
-  padding: 2px 8px;
+.plugin-card-meta {
   font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  border-bottom: 1px solid $text-muted;
+  color: $amber;
 }
 
-.greeting-titlebar-text {
-  font-family: $font-code;
+.plugin-card-name {
+  font-family: $font-title;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
 }
 
-.greeting-body {
-  padding: 14px 16px 16px;
+.plugin-card-desc {
+  font-family: $font-content;
+  font-size: $font-content-size;
+  line-height: 1.5;
+  color: var(--sub);
 }
 
 // 3D ASCII 아트 (스페이스 인베이더) — 드래그로 회전 가능
+// 글자 크기는 invader.js 가 세 마리가 본문 폭에 들어가게 맞춘다 (최대 10px)
 .greeting-ascii {
-  margin: 0 auto 8px;
+  margin: 0;
   padding: 0;
   border: none;
   background: transparent;
   overflow: hidden;       // minima pre 기본 overflow:auto 무효화 (스크롤바 방지)
   font-family: $font-code;
-  font-size: 12px;
+  font-size: 10px;
+  font-variant-ligatures: none; // JetBrains Mono 가 == 를 긴 막대로 이어 그리지 않게
   line-height: 1;
   letter-spacing: 0;
-  color: #55FF55;
-  text-shadow: 0 0 5px rgba(85, 255, 85, 0.3);
+  --inv: var(--phosphor);
+  color: var(--inv);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--inv) 35%, transparent);
   white-space: pre;
   text-align: center;
   cursor: grab;
@@ -1103,240 +1269,310 @@ body.is-home .main-content {
   touch-action: pan-y;   // 세로 스크롤은 살리고 드래그 회전만 가로채기
 
   &:active { cursor: grabbing; }
+
+  // 마리별 색 — 사이드바 네온사인 팔레트 (README 창은 테마와 무관하게 어두워 한 벌로 충분)
+  &[data-invader="squid"] { --inv: #3FE0FF; }
+  &[data-invader="crab"] { --inv: #FF4A3D; }
+  &[data-invader="octopus"] { --inv: #FFCC2E; }
 }
 
-// 편집 가능한 터미널 영역 — 각 줄(<div>) 앞에 "> " 가상 prompt (편집 불가)
-.greeting-terminal {
-  font-family: 'JetBrains Mono', 'Mona12Emoji', 'Consolas', monospace;
-  font-size: 0.9rem;
-  font-weight: 300;
+// ── 글 목록 (홈 하단) — 카테고리 탭 + 최신 글 크게 + DOS dir 목록 / 우측 about·tags ──
+.home-posts {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.home-posts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.home-posts-main {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.home-posts-side {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+// 최신 글 — 썸네일 좌 + 글 정보 우
+.home-featured {
+  display: block;
   color: $text;
-  line-height: 1.55;
-  letter-spacing: 0.02em;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  outline: none;
-  caret-color: $text;
-  min-height: 1.55em;
-  // 높이 고정(3줄) + 내부 스크롤 — 줄을 추가해도 창이 안 자라서
-  // 홈 그리드 재정렬(CRT가 같이 밀리는 현상)이 일어나지 않는다
-  max-height: calc(1.55em * 3);
-  overflow-y: auto;
-  cursor: text;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 
-  // 각 줄: padding-left 로 prompt 공간 확보, ::before 는 absolute 로 띄움
-  // → caret offset 0 이 텍스트 영역 시작점(= "> " 뒤)에 위치
-  > div, > p {
-    position: relative;
-    margin: 0;
-    padding-left: 1.4em;
-    min-height: 1.55em;  // 빈 줄도 1줄 높이 유지 (caret 가시성)
-
-    &::before {
-      content: '> ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      color: $text-muted;
-      user-select: none;
-      -webkit-user-select: none;
-      pointer-events: none;
-    }
+  &:hover {
+    color: $text;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 $shadow;
   }
 }
 
-// 최신 글 섹션 — about 페이지 헤딩 스타일 + 카드별 개별 윈도우
-.latest-posts {
-  margin: 32px auto 48px;
-  max-width: 720px;
-  padding: 0 16px;
-}
-
-.latest-posts-heading {
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: $accent;
-  letter-spacing: 0.05em;
-  margin: 0 0 20px;
+.home-featured-body {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.latest-posts-heading-icon {
-  font-family: 'Mona12Emoji', $font-base;
-  font-size: 1.05em;
-  line-height: 1;
-}
-
-.latest-posts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-// 각 카드 = MS-DOS 창 (타이틀바 + 본문)
-.latest-post-card {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: $text;
-  background: $bg;
-  border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
-  box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
-  min-width: 0;
-  transition: filter 0.15s ease;
-
-  &:hover { filter: brightness(1.3); }
-}
-
-.latest-post-card-titlebar {
-  background: $border;
-  color: $bg;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid $text-muted;
-  font-family: $font-code;
-  white-space: nowrap;
+.home-featured-thumb {
+  position: relative;
+  flex: 1 1 300px;
+  min-height: 220px;
+  background: var(--term-bg);
   overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.latest-post-card-titlebar-text {
-  font-family: inherit;
-}
-
-.latest-post-thumb {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: $surface-high;
-  overflow: hidden;
-  flex-shrink: 0;
   img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: top;
   }
 }
 
-.latest-post-meta {
-  padding: 8px 4px 4px;
+.home-featured-text {
+  flex: 1 1 300px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-
-  time {
-    font-size: 0.78rem;
-    color: $text-muted;
-    font-family: $font-code;
-    letter-spacing: 0.04em;
-  }
+  gap: 12px;
+  padding: 22px 24px;
+  box-sizing: border-box;
 }
 
-.latest-post-title {
+.home-featured-meta {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 300;
-  color: $text;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: $text-muted;
 }
 
-// ── 데스크톱 홈 2컬럼: 콘솔(좌) ↔ README + recent posts(우) ──
-// 콘솔 양옆 빈 공간을 콘텐츠로 채워 첫 화면에서 글이 바로 보이게 한다.
-@media (min-width: 1025px) {
-  .home {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    column-gap: 56px;
-    align-items: start;     // CRT가 상단에 붙게 — 세로 중앙정렬 제거
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 40px 48px;
+.home-featured-title {
+  margin: 0;
+  font-family: $font-title;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+.home-featured-excerpt {
+  margin: 0;
+  font-family: $font-content;
+  font-size: $font-content-size;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+.read-more {
+  margin-top: auto;
+  padding-top: 6px;
+  color: $amber;
+  font-size: 0.9rem;
+}
+
+// DOS dir 목록
+.dir-head {
+  margin: 0;
+  padding: 14px 18px 10px;
+  font-size: 0.82rem;
+  color: $text-muted;
+}
+
+.dir-cols,
+.dir-row {
+  display: grid;
+  grid-template-columns: 92px 44px minmax(0, 1fr) minmax(0, 210px);
+  align-items: center;
+  column-gap: 16px;
+}
+
+.dir-cols {
+  padding: 0 18px 8px 34px;
+  font-size: 0.75rem;
+  color: $text-muted;
+  border-bottom: 1px dashed var(--line);
+  .dir-tags { text-align: right; }
+}
+
+.dir-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+
+  // 처음 10개만 — "dir /a" 버튼으로 전체 펼침
+  &:not(.is-expanded) > li:nth-child(n + 11) { display: none; }
+}
+
+.dir-row {
+  position: relative;
+  min-height: 44px;
+  padding: 6px 18px 6px 34px;
+  color: var(--text);
+  text-decoration: none;
+
+  &::before {
+    content: '▶';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: $amber;
+    opacity: 0;
   }
 
-  .hero-section {
-    grid-column: 1;
-    margin: 0;
-    padding: 0;
+  &:hover,
+  &:focus-visible {
+    background: var(--row);
+    color: var(--bright);
+    &::before { opacity: 1; }
   }
+}
 
-  // 컬럼 폭 기준으로 다시 계산 — 높이는 viewport 안에 들어가게 vh로 캡
-  .console-frame {
-    width: min(100%, calc(82vh * 1856 / 2304));
+.dir-date {
+  font-size: 0.82rem;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+.dir-name {
+  font-size: 0.98rem;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dir-tags {
+  font-size: 0.75rem;
+  color: $text-muted;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dir-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border-top: 1px dashed var(--line);
+  font-size: 0.82rem;
+  color: $text-muted;
+}
+
+.dir-more {
+  width: auto;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+}
+
+// about.exe / tags.cfg
+.about-mini-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 18px 20px;
+  text-align: center;
+
+  p { margin: 0; }
+}
+
+.about-mini-avatar {
+  display: block;
+  width: 128px;
+  height: 128px;
+  object-fit: cover;
+  background: #ffffff;
+  border: 2px solid var(--frame);
+}
+
+.about-mini-name {
+  margin-top: 6px !important;
+  font-family: $font-title;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+
+  span {
+    font-family: $font-base;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: $text-muted;
   }
+}
 
-  // 우측 컬럼 래퍼 — 플러그인 / README / recent posts 세로 스택
-  .home-side {
-    grid-column: 2;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+.about-mini-role { font-size: 0.85rem; color: $amber; }
+.about-mini-tagline { font-size: 0.85rem; color: var(--sub); }
 
-  .home-plugins,
-  .home-greeting,
-  .latest-posts {
-    margin: 0;
-    max-width: 540px;
-    width: 100%;
-    padding: 0;
-  }
+.about-mini-btn {
+  width: auto;
+  height: 36px;
+  margin-top: 8px;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
 
-  .home-greeting { margin-top: 28px; }
-  .latest-posts { margin-top: 28px; }
+.tags-mini-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 16px 10px;
+}
 
-  // 우측 컬럼에선 카드 3장을 가로형(썸네일 좌 + 메타 우)으로 쌓는다
-  .latest-posts-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
+.tag-chip {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  font-size: 0.78rem;
+  color: var(--fg);
+  text-decoration: none;
 
-  .latest-post-card {
-    display: grid;
-    grid-template-columns: 148px minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-  }
+  span { color: $text-muted; }
+  &:hover { border-color: $amber; color: $amber; }
+}
 
-  .latest-post-card-titlebar { grid-column: 1 / -1; }
-
-  .latest-post-thumb {
-    grid-row: 2;
-    grid-column: 1;
-    height: 100%;
-    aspect-ratio: 16 / 9;
-  }
-
-  .latest-post-meta {
-    grid-row: 2;
-    grid-column: 2;
-    padding: 8px 12px;
-    justify-content: center;
-  }
+.tags-mini-all {
+  display: block;
+  padding: 0 16px 14px;
+  font-size: 0.82rem;
+  color: $amber;
+  text-decoration: none;
 }
 
 // --- Console Frame (image-based CRT + Gamepad) ---
 // 픽셀아트 자산 1장으로 외형 표현. 화면/버튼은 % 좌표로 절대위치 hit area.
 .console-frame {
   position: relative;
-  // 콘솔 이미지가 portrait 비율(0.806) 이라 너비/높이 둘 다 viewport 안에 들어가야 함
-  // → 너비는 (a) vw 기반 상한 (b) vh 에서 역산한 너비 둘 중 작은 값으로
-  // 1080p: 50vw=960 vs 80vh×0.806=696 → 696px (둘 다 viewport 안)
-  // 4K   : 50vw=1920 vs 80vh×0.806=1392 → 1392px
-  // 1440p: 50vw=720 vs 80vh×0.806=648 → 648px
-  width: min(50vw, calc(80vh * 1856 / 2304));
-  max-width: 100%;
-  margin: 0 auto;
+  // crop 폭의 139.52% (= 1052/754, 캡처 기준 본체 폭 비율) — 여백만큼 바깥으로 밀어낸다
+  // % 마진은 모두 containing block(.console-crop) '폭' 기준: 좌 19.76%, 위 6.10%, 아래 3.98%
+  width: 139.52%;
+  max-width: none;
+  margin: -6.1% 0 -3.98% -19.76%;
   aspect-ratio: 1856 / 2304;
   user-select: none;
   -webkit-user-select: none;
@@ -1564,12 +1800,12 @@ body.is-home .main-content {
   height: calc(100vh - 56px);
   overflow-y: auto;
   padding: 24px 20px;
-  border-left: 2px solid rgba($border, 0.2);
+  border-left: 2px solid tone(0.2);
 }
 
 .sidebar-section {
   margin-bottom: 28px;
-  border: 2px solid rgba($border, 0.2);
+  border: 2px solid tone(0.2);
   padding: 16px;
   background: $surface;
 
@@ -1579,7 +1815,7 @@ body.is-home .main-content {
     color: $primary;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid rgba($border, 0.2);
+    border-bottom: 2px solid tone(0.2);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -1618,23 +1854,23 @@ body.is-home .main-content {
   width: 220px;
   max-height: calc(100vh - 140px);
   z-index: 90;
-  background: $bg;
+  background: $win;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    2px 2px 0 $shadow;
   overflow: hidden;
 }
 
 .floating-toc-titlebar {
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 2px 10px;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid $text-muted;
+  border-bottom: 1px solid $bevel-lo;
   font-family: $font-code;
 }
 
@@ -1647,7 +1883,7 @@ body.is-home .main-content {
   scrollbar-color: $border $bg;
   &::-webkit-scrollbar { width: 6px; }
   &::-webkit-scrollbar-thumb { background: $border; }
-  &::-webkit-scrollbar-track { background: $bg; }
+  &::-webkit-scrollbar-track { background: $win; }
 }
 
 // 게시글 페이지(.post-content 가 존재) + 와이드 PC 뷰에서만 노출
@@ -1660,7 +1896,7 @@ body.is-home .main-content {
   padding: 0;
   li {
     padding: 10px 0;
-    border-bottom: 1px solid rgba($border, 0.3);
+    border-bottom: 1px solid tone(0.3);
     &:last-child { border-bottom: none; }
     a {
       color: $text-muted;
@@ -1689,13 +1925,13 @@ body.is-home .main-content {
   height: 28px;
   z-index: 300;            // fixed 사이드바(z 200) 위 — 좌측 소셜 아이콘 클릭 보장
   background-color: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 0 6px;
   font-size: 0.85rem;
   // Win95 status bar 스타일 (top-bar와 동일 inset 3D)
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo;
 }
 
 .footer-inner {
@@ -1718,22 +1954,22 @@ body.is-home .main-content {
     width: 26px;
     height: 22px;
     background: $border;
-    color: $bg;
+    color: $chrome-fg;
     text-decoration: none;
     // 3D outset (튀어나옴)
     box-shadow:
-      inset 1px 1px 0 $primary,
-      inset -1px -1px 0 $text-muted,
-      0 0 0 1px $bg;
+      inset 1px 1px 0 $bevel-hi,
+      inset -1px -1px 0 $bevel-lo,
+      0 0 0 1px $bevel-edge;
 
     &:hover { color: #000; }
 
     &:active {
       // 눌리면 inset (들어감)
       box-shadow:
-        inset -1px -1px 0 $primary,
-        inset 1px 1px 0 $text-muted,
-        0 0 0 1px $bg;
+        inset -1px -1px 0 $bevel-hi,
+        inset 1px 1px 0 $bevel-lo,
+        0 0 0 1px $bevel-edge;
     }
 
     svg { width: 14px; height: 14px; fill: currentColor; }
@@ -1746,7 +1982,7 @@ body.is-home .main-content {
   left: 50%;
   transform: translateX(-50%);
   font-size: 1.15rem;
-  color: $surface;
+  color: $chrome-fg;
   letter-spacing: 0.05em;
 }
 
@@ -1754,7 +1990,7 @@ body.is-home .main-content {
 .footer-link {
   margin-left: auto;
   padding: 0 6px;
-  color: $surface;
+  color: $chrome-fg;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   text-decoration: none;
@@ -1790,7 +2026,7 @@ body.is-home .main-content {
     }
 
     &.active {
-      color: $bg;
+      color: $win;
       background-color: $accent;
       border-color: $accent;
     }
@@ -1813,13 +2049,13 @@ body.is-home .main-content {
   flex-direction: column;
   text-decoration: none;
   color: $text;
-  background: $bg;
+  background: $win;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    2px 2px 0 $shadow;
   min-width: 0;
   transition: filter 0.15s ease;
 
@@ -1828,11 +2064,11 @@ body.is-home .main-content {
 
 .post-card-titlebar {
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 2px 8px;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid $text-muted;
+  border-bottom: 1px solid $bevel-lo;
   font-family: $font-code;
   white-space: nowrap;
   overflow: hidden;
@@ -1945,7 +2181,7 @@ body.is-home .main-content {
     padding: 2px 8px;
     background-color: transparent;
     color: $text-muted;
-    border: 1px solid rgba($border, 0.35);
+    border: 1px solid tone(0.35);
     font-size: 0.7rem;           // 0.56rem은 판독 한계 이하 — 존재감은 색/보더로 낮춤
     font-weight: 400;
     text-decoration: none;
@@ -1954,18 +2190,19 @@ body.is-home .main-content {
     transition: color 0.2s, border-color 0.2s;
 
     &:hover {
-      color: rgba($border, 0.85);
-      border-color: rgba($border, 0.65);
+      color: tone(0.85);
+      border-color: tone(0.65);
     }
   }
 }
 
 .post-content {
-  // 본문은 픽셀 폰트(HBIOS-SYS) 대신 시스템 한글 폰트로
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  // 본문 도트 폰트 — 20px 고정 (하위 요소도 em/rem 으로 크기를 바꾸지 않는다)
+  font-family: $font-content;
+  font-size: $font-content-size;
   // 300(Light)은 리스트·표·인용구만 얇아지는 혼재를 만들었음 — 400으로 통일
   font-weight: 400;
-  line-height: 1.8;
+  line-height: 1.7;
   overflow-wrap: break-word;
   // keep-all: 한글이 어절 중간에서 잘리지 않게 (긴 URL은 overflow-wrap이 처리)
   word-break: keep-all;
@@ -1973,14 +2210,13 @@ body.is-home .main-content {
 
   > :first-child { margin-top: 0; }
 
-  // 헤딩 (#, ##, ### …) — 색상 #CBA040, 픽셀 폰트 유지
-  // HBIOS-SYS는 단일 웨이트라 700 강제 시 합성 볼드로 픽셀이 뭉개짐 → 400 + 합성 차단
+  // 헤딩 (#, ##, ### …) — 제목 폰트(차이 활짝체 Bold)
   h1, h2, h3, h4, h5, h6 {
-    font-family: $font-base;   // HBIOS-SYS 픽셀 폰트
+    font-family: $font-title;
     margin-top: 2em;
     margin-bottom: 0.5em;
     color: $amber !important;
-    font-weight: 400 !important;
+    font-weight: 700 !important;
     font-synthesis: none;
     text-transform: none;
     overflow-wrap: break-word;
@@ -1999,23 +2235,25 @@ body.is-home .main-content {
     word-break: keep-all;
   }
 
-  // md **강조** — 본문은 시스템 폰트라 진짜 볼드 페이스가 있음
+  // md **강조** — 도트 폰트엔 볼드가 없어 합성 볼드는 도트가 번진다 → 1px 겹쳐 찍기
   strong, b {
-    font-weight: 700;
+    font-weight: 400;
+    font-synthesis: none;
+    text-shadow: 1px 0 0 currentColor;
   }
 
   // 인라인 `code` — 색상 강조 (밝은 푸른 톤) + 미세한 동일 톤 배경
   code,
   code.highlighter-rouge {
     display: inline;
-    color: #8FB4E8;
-    background: rgba(143, 180, 232, 0.14);
+    color: var(--code-fg);
+    background: var(--code-bg);
     border: none;
     box-shadow: none;
     padding: 1px 5px;
     margin: 0 1px;
     font-family: $font-code;
-    font-size: 0.92em;
+    font-size: 0.8em; // 본문 20px 도트 폰트와 x-height 를 맞춘 크기 (16px)
     word-break: break-word;
     overflow-wrap: break-word;
     white-space: pre-wrap;
@@ -2026,8 +2264,19 @@ body.is-home .main-content {
   // 코드 블록 안의 code 는 색상/스타일 상속 (하이라이터 그대로)
   pre code, .highlight code {
     color: inherit;
+    background: none;
     padding: 0;
     white-space: inherit;
+  }
+
+  // 하이라이터가 모르는 언어(gitignore 등)는 <pre><code> 만 나온다 — JS 가 창으로 감싸기 전/무JS 대비
+  > pre {
+    background: var(--term-bg);
+    color: var(--term-fg);
+    border: 2px solid var(--frame);
+    box-shadow: 4px 4px 0 $shadow;
+    font-size: 0.85rem;
+    line-height: 1.55;
   }
 
   // 긴 링크 줄바꿈
@@ -2047,24 +2296,24 @@ body.is-home .main-content {
     margin: 1.5em 0;
     padding: 0;
     border: 2px solid;
-    border-color: $primary $text-muted $text-muted $primary;
+    border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
     background: #000;        // 프레임 내부 전부 검정 — gap 없이
     box-shadow:
-      inset 1px 1px 0 $primary,
-      inset -1px -1px 0 $text-muted,
-      2px 2px 0 #000;
+      inset 1px 1px 0 $bevel-hi,
+      inset -1px -1px 0 $bevel-lo,
+      2px 2px 0 $shadow;
 
     // 타이틀바 — 기본 fallback
     &::before {
       content: '.txt';
       display: block;
       background: $border;
-      color: $bg;
+      color: $chrome-fg;
       padding: 2px 10px;
       font-size: 0.75rem;
       font-family: $font-code;
       letter-spacing: 0.06em;
-      border-bottom: 1px solid $text-muted;
+      border-bottom: 1px solid $bevel-lo;
     }
 
     .highlight {
@@ -2159,32 +2408,30 @@ body.is-home .main-content {
     border-collapse: collapse;
     border-spacing: 0;
     margin: 1.75em 0;
-    background: $bg;
+    background: $win;
     // 코드 폰트엔 한글 글리프가 없어 표 안에서 두 폰트가 섞였음 — 본문 폰트 사용
     font-family: inherit;
     color: $text;
     // 외곽 양각 + 검은 그림자 (다른 윈도우 패턴과 통일)
     border: 2px solid;
-    border-color: $primary $text-muted $text-muted $primary;
+    border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
     box-shadow:
-      inset 1px 1px 0 $primary,
-      inset -1px -1px 0 $text-muted,
-      2px 2px 0 #000;
+      inset 1px 1px 0 $bevel-hi,
+      inset -1px -1px 0 $bevel-lo,
+      2px 2px 0 $shadow;
   }
 
   // 헤더 행 — 타이틀바 톤 (밝은 회색 + 어두운 텍스트)
   thead th {
     background: $border;
-    color: $bg;
+    color: $chrome-fg;
     font-weight: 400 !important;
     text-transform: none;
     text-align: left;
     padding: 5px 12px;
     border: none;
-    border-right: 1px solid $text-muted;
-    border-bottom: 1px solid $text-muted;
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
+    border-right: 1px solid $bevel-lo;
+    border-bottom: 1px solid $bevel-lo;
     &:last-child { border-right: none; }
   }
 
@@ -2192,7 +2439,7 @@ body.is-home .main-content {
   // (Minima 테마의 기본 표 스타일을 !important 로 덮어씀)
   tbody {
     tr {
-      border-bottom: 1px dashed rgba($text-muted, 0.45) !important;
+      border-bottom: 1px dashed tone(0.45) !important;
       background: transparent !important;
       color: $text !important;
       &:last-child { border-bottom: none !important; }
@@ -2210,10 +2457,9 @@ body.is-home .main-content {
     td {
       padding: 7px 12px !important;
       border: none !important;
-      border-right: 1px dashed rgba($text-muted, 0.35) !important;
+      border-right: 1px dashed tone(0.35) !important;
       background: transparent !important;
       color: $text !important;
-      font-size: 0.92rem;
       word-break: keep-all;
       vertical-align: top;
       &:last-child { border-right: none !important; }
@@ -2245,7 +2491,7 @@ body.is-home .main-content {
   .footnotes {
     margin-top: 3em;
     padding-top: 14px;
-    border-top: 1px dashed rgba($border, 0.5);
+    border-top: 1px dashed tone(0.5);
     font-size: 0.85rem;
     color: $text-muted;
     p { margin-bottom: 0.4em; }
@@ -2322,38 +2568,39 @@ h1 code, h2 code, h3 code, h4 code {
   font-size: 0.85em;
 }
 
+// 코드 블록은 테마와 무관하게 어두운 터미널 — 하이라이터 토큰 색이 어두운 바탕 기준
 div.highlight,
 figure.highlight,
 .highlight {
-  background-color: $surface !important;
+  background-color: var(--term-bg) !important;
   border: 2px solid $border;
   margin: 1.5em 0;
 
   pre, pre.highlight, code, pre code {
-    background-color: $surface !important;
-    color: $text !important;
+    background-color: var(--term-bg) !important;
+    color: var(--term-fg) !important;
   }
 
   .c, .cm, .c1, .cs { color: #6b7280 !important; }
   .k, .kd, .kn, .kp, .kr, .kc, .kt { color: #c084fc !important; }
   .s, .s1, .s2, .sb, .sc, .sd, .sh, .sx, .sr { color: #86efac !important; }
-  .na { color: $accent !important; }
+  .na { color: #FFFFFF !important; }
   .nb, .nc, .no, .nd { color: #93c5fd !important; }
   .nf, .nx { color: #93c5fd !important; }
-  .nn { color: $accent !important; }
+  .nn { color: #FFFFFF !important; }
   .ni, .ne { color: #fca5a5 !important; }
   .mi, .mf, .mh, .mo, .il { color: #fdba74 !important; }
-  .o, .p { color: $text !important; }
+  .o, .p { color: var(--term-fg) !important; }
   .nt { color: #fca5a5 !important; }
   .nv, .vi, .vg, .vc { color: #fca5a5 !important; }
   .err { color: #fca5a5 !important; background-color: transparent !important; }
   .gd { color: #fca5a5 !important; }
   .gi { color: #86efac !important; }
-  .w { color: $text !important; }
+  .w { color: var(--term-fg) !important; }
 }
 
 div.highlighter-rouge {
-  background-color: $surface !important;
+  background-color: var(--term-bg) !important;
 }
 
 // ═══════════════════════════════════════
@@ -2361,8 +2608,9 @@ div.highlighter-rouge {
 // ═══════════════════════════════════════
 
 .page-heading {
+  font-family: $font-title;
   font-size: 1.75rem;
-  font-weight: 400;
+  font-weight: 700;
   margin-bottom: 8px;
   text-transform: uppercase;
   color: $primary;
@@ -2450,7 +2698,7 @@ div.highlighter-rouge {
   padding: 0;
   li {
     padding: 6px 0;
-    border-bottom: 1px solid rgba($border, 0.2);
+    border-bottom: 1px solid tone(0.2);
     .post-meta { margin-right: 8px; }
     a {
       color: $text;
@@ -2529,7 +2777,6 @@ div.highlighter-rouge {
     overflow-wrap: break-word;
   }
   .post-card-content { padding: 10px 12px; }
-  .post-card-excerpt { font-size: 0.78rem; }
   .post-title { font-size: 1.5rem; }
 
   // 푸터 copyright — absolute 중앙 고정(1.15rem)이 소셜 아이콘과 겹치고 탭을 가로챘음 → 우측 정렬
@@ -2571,51 +2818,11 @@ div.highlighter-rouge {
     .tab { padding: 4px 10px; font-size: 0.75rem; }
   }
 
-  // 히어로 섹션
-  .hero-section { padding: 16px 0 20px; }
-
   // 사이드바 타이틀바 — 모바일에선 reset/expand 버튼 숨김 (close만 표시)
   .sidebar-titlebar .window-controls .window-btn:not(.window-btn--close) {
     display: none;
   }
 
-  // 콘솔 프레임 — 부모 width/padding 제약 모두 해제하고 100% 사용
-  body.is-home .site-container {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-  body.is-home .main-content {
-    padding: 16px 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-  body.is-home .home,
-  body.is-home .hero-section {
-    width: 100%;
-    margin: 0;
-  }
-  .hero-section {
-    padding: 8px 0 16px;
-    overflow-x: hidden;     // 콘솔 프레임 확장을 이 섹션 안에서만 격리 (top-bar 영향 없음)
-  }
-  .console-frame {
-    // 모바일: PNG 좌우 투명 여백을 hero-section 밖으로 밀어내 viewport 가득.
-    // 단 화면비가 세로로 긴 자산(1856:2304)이라, 낮은 화면에선 콘솔 하나가 한 화면을
-    // 다 먹지 않게 (뷰포트 높이 - 고정 크롬 56px) 기준 역산 폭으로 캡.
-    --cw: min(135vw, calc((100vh - 56px) * 0.92 * 1856 / 2304));
-    width: var(--cw) !important;
-    max-width: none !important;
-    // 좌우 대칭 마진 필수: hero-section이 align-items:center flex라 outer 폭이
-    // 컨테이너와 같아야 추가 시프트 없이 정중앙에 붙음
-    margin-left: calc((100% - var(--cw)) / 2) !important;
-    margin-right: calc((100% - var(--cw)) / 2) !important;
-  }
-  @supports (height: 100svh) {
-    .console-frame {
-      // svh: 모바일 URL바가 보이는 상태 기준 — vh보다 정확
-      --cw: min(135vw, calc((100svh - 56px) * 0.92 * 1856 / 2304));
-    }
-  }
   // 좌우 viewport edge 2px 장식 라인 숨김 (콘솔이 끝까지 닿게)
   html::before, html::after { display: none; }
 
@@ -2637,28 +2844,8 @@ div.highlighter-rouge {
     border-radius: 50% !important;
   }
 
-  // 홈 플러그인 카드 모바일 — 2열 유지 시 카드가 ~150px까지 줄어 라벨 판독 불가 → 1열
-  .home-plugins { margin: 40px auto 0; max-width: min(480px, calc(100% - 32px)); padding: 0; }
-  .home-plugins-grid { grid-template-columns: 1fr; gap: 12px; }
-
-  // 홈 인사말 모바일 (recent posts와 동일 폭)
-  .home-greeting { margin: 24px auto 0; max-width: min(480px, calc(100% - 32px)); padding: 0; }
   .greeting-titlebar { font-size: 0.7rem; }
   .greeting-body { padding: 12px 12px 14px; }
-  // 16px 미만 contenteditable은 iOS Safari가 포커스 시 페이지를 확대함
-  .greeting-terminal { font-size: 1rem; }
-  // ASCII 인베이더(고정 폭 ~302px)가 초소형 화면 박스 안에 들어가게 비례 축소
-  .greeting-ascii { font-size: min(12px, 3.2vw); }
-
-  // 최신 글 카드 모바일 — 1열
-  .latest-posts { margin: 24px auto 32px; max-width: min(480px, calc(100% - 32px)); padding: 0; }
-  .latest-posts-heading { font-size: 0.95rem; margin-bottom: 12px; }
-  .latest-posts-grid { grid-template-columns: 1fr; gap: 12px; }
-  .latest-post-card { padding: 4px; }
-  .latest-post-thumb { aspect-ratio: 16 / 7; }
-  .latest-post-meta { padding: 5px 4px 3px; gap: 2px; }
-  .latest-post-meta time { font-size: 0.7rem; }
-  .latest-post-title { font-size: 0.8rem; line-height: 1.25; }
 
   // 소개글
   .hero-welcome {
@@ -2726,7 +2913,7 @@ div.highlighter-rouge {
 .comment-submit {
   padding: 8px 20px;
   background: $accent;
-  color: $bg;
+  color: $win;
   border: 2px solid $accent;
   font-size: 0.85rem;
   font-weight: 400;
@@ -2770,7 +2957,7 @@ div.highlighter-rouge {
 .comment-item {
   padding: 12px 16px;
   background: $surface;
-  border: 2px solid rgba($border, 0.3);
+  border: 2px solid tone(0.3);
 }
 
 .comment-header {
@@ -3311,8 +3498,9 @@ body.admin-editor-open {
 
   .about-name {
     margin: 0 0 4px;
+    font-family: $font-title;
     font-size: 2rem;
-    font-weight: 400;
+    font-weight: 700;
     color: $primary;
     letter-spacing: 0.02em;
 
@@ -3381,7 +3569,7 @@ body.admin-editor-open {
     top: 8px;
     bottom: 8px;
     width: 2px;
-    background: rgba($border, 0.4);
+    background: tone(0.4);
   }
 }
 
@@ -3478,16 +3666,18 @@ body.admin-editor-open {
 
 .about-plugin-title {
   margin: 0 0 6px;
+  font-family: $font-title;
   font-size: 1.15rem;
-  font-weight: 400;
+  font-weight: 700;
   color: $primary;
 }
 
 .about-plugin-desc {
   margin: 0 0 12px;
   color: $text-muted;
-  font-size: 0.92rem;
-  line-height: 1.65;
+  font-family: $font-content;
+  font-size: $font-content-size;
+  line-height: 1.5;
 }
 
 .about-plugin-stat {
@@ -3507,24 +3697,24 @@ body.admin-editor-open {
 
 // MS-DOS 창 형태 — 양각 보더 + 검은 그림자, 타이틀바 + 본문 구조
 .about-project {
-  background: $bg;
+  background: $win;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    2px 2px 0 $shadow;
   display: flex;
   flex-direction: column;
 }
 
 .about-project-titlebar {
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 2px 10px;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid $text-muted;
+  border-bottom: 1px solid $bevel-lo;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3587,8 +3777,8 @@ body.admin-editor-open {
   letter-spacing: 0.15em;
   padding: 8px 18px;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
-  background: $bg;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
+  background: $win;
 }
 
 .about-project-info {
@@ -3638,7 +3828,7 @@ body.admin-editor-open {
     flex-direction: column;
     padding: 12px 16px;
     background: $surface;
-    border: 2px solid rgba($border, 0.3);
+    border: 2px solid tone(0.3);
     color: $text;
     text-decoration: none;
     transition: border-color 0.15s ease;
@@ -3733,7 +3923,7 @@ body.admin-editor-open {
 .daily-entry {
   padding: 22px 26px;
   background: $surface;
-  border: 2px solid rgba($border, 0.3);
+  border: 2px solid tone(0.3);
   border-left: 3px solid $accent;
 }
 
@@ -3749,7 +3939,7 @@ body.admin-editor-open {
 .daily-rule {
   flex: 1 1 auto;
   height: 0;
-  border-top: 1px dashed rgba($border, 0.5);
+  border-top: 1px dashed tone(0.5);
 }
 
 .daily-entry-body {
@@ -3799,7 +3989,7 @@ body.admin-editor-open {
   margin-left: 18px;
   max-height: 80vh;
   background: $surface-lowest;
-  border: 1px solid rgba($border, 0.3);
+  border: 1px solid tone(0.3);
   overflow: hidden;
 
   a { display: block; width: 100%; height: 100%; }
@@ -3838,9 +4028,10 @@ body.admin-editor-open {
   display: none;          // 터치 환경은 스와이프 — hover 가능한 포인터에서만 표시
   align-items: center;
   justify-content: center;
-  background: rgba($surface-lowest, 0.75);
-  border: 1px solid rgba($border, 0.6);
-  color: $text;
+  // 사진 위에 뜨는 컨트롤 — 테마와 무관하게 어두운 반투명
+  background: rgba(11, 12, 14, 0.7);
+  border: 1px solid rgba(192, 192, 192, 0.6);
+  color: #E4E4EA;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -3858,8 +4049,8 @@ body.admin-editor-open {
   top: 8px;
   right: 8px;
   padding: 2px 8px;
-  background: rgba($surface-lowest, 0.75);
-  color: $text;
+  background: rgba(11, 12, 14, 0.7);
+  color: #E4E4EA;
   font-size: 0.75rem;
   pointer-events: none;
 }
@@ -3876,7 +4067,7 @@ body.is-admin .daily-compose {
   gap: 12px;
   padding: 18px 22px;
   background: $surface;
-  border: 2px dashed rgba($border, 0.5);
+  border: 2px dashed tone(0.5);
 }
 
 .daily-compose-text {
@@ -3884,7 +4075,7 @@ body.is-admin .daily-compose {
   box-sizing: border-box;
   padding: 10px 12px;
   background: $surface-lowest;
-  border: 1px solid rgba($border, 0.5);
+  border: 1px solid tone(0.5);
   color: $text;
   font-family: $font-base;
   font-size: 1rem;
@@ -3905,7 +4096,7 @@ body.is-admin .daily-compose {
   position: relative;
   width: 72px;
   height: 72px;
-  border: 1px solid rgba($border, 0.5);
+  border: 1px solid tone(0.5);
 
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   button {
@@ -3962,7 +4153,7 @@ body.is-admin .daily-entry-del {
   display: inline-block;
   padding: 0 6px;
   background: none;
-  border: 1px solid rgba($border, 0.5);
+  border: 1px solid tone(0.5);
   color: $text-muted;
   font-family: $font-base;
   font-size: 0.72rem;
@@ -3987,30 +4178,28 @@ body.is-admin .daily-entry-del {
 // ═══════════════════════════════════════
 
 .home-search {
-  margin: 0 auto 20px;
-  max-width: 720px;
-  // width:100% + padding(content-box) 조합은 부모 폭 + 32px 오버플로를 만들었음 — width:auto가 안전
-  padding: 0 16px;
+  margin: 0;
+  padding: 0;
 }
 
 .search-window {
   position: relative;
-  background: $bg;
+  background: $win;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    2px 2px 0 #000;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    2px 2px 0 $shadow;
 }
 
 .search-titlebar {
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 2px 8px;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid $text-muted;
+  border-bottom: 1px solid $bevel-lo;
   font-family: $font-code;
 }
 
@@ -4046,9 +4235,9 @@ body.is-admin .daily-entry-del {
   z-index: 60;
   max-height: 60vh;
   overflow-y: auto;
-  background: $bg;
+  background: $win;
   border: 2px solid $border;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 2px 2px 0 $shadow;
 
   &.is-open { display: block; }
 }
@@ -4067,7 +4256,7 @@ body.is-admin .daily-entry-del {
   padding: 8px 12px;
   text-decoration: none;
   color: $text;
-  border-bottom: 1px solid rgba($border, 0.15);
+  border-bottom: 1px solid tone(0.15);
 
   &:last-child { border-bottom: none; }
   &:hover,
@@ -4094,27 +4283,6 @@ body.is-admin .daily-entry-del {
   padding: 12px;
   font-size: 0.8rem;
   color: $text-muted;
-}
-
-// 데스크톱 홈 2컬럼: 검색창을 콘솔과 같은 폭으로 모니터 바로 위에 배치
-@media (min-width: 1025px) {
-  // row1(검색창)은 intrinsic 높이 고정 — home-side(row 1/span 2)의 초과 높이가
-  // row1/row2에 균등 분배되어 검색창-콘솔 사이가 벌어지는 것을 막는다
-  .home { grid-template-rows: auto 1fr; }
-
-  .home-search {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: center;
-    width: min(100%, calc(82vh * 1856 / 2304));
-    max-width: none;
-    margin: 0 0 20px;
-    padding: 0;
-  }
-
-  .hero-section { grid-row: 2; }
-
-  .home-side { grid-row: 1 / span 2; }
 }
 
 // ═══════════════════════════════════════
@@ -4144,13 +4312,13 @@ body.lightbox-open { overflow: hidden; }
   flex-direction: column;
   max-width: min(1280px, 94vw);
   max-height: 92vh;
-  background: $bg;
+  background: $win;
   border: 2px solid;
-  border-color: $primary $text-muted $text-muted $primary;
+  border-color: $bevel-hi $bevel-lo $bevel-lo $bevel-hi;
   box-shadow:
-    inset 1px 1px 0 $primary,
-    inset -1px -1px 0 $text-muted,
-    4px 4px 0 #000;
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    4px 4px 0 $shadow;
 }
 
 .lightbox-titlebar {
@@ -4159,7 +4327,7 @@ body.lightbox-open { overflow: hidden; }
   justify-content: space-between;
   gap: 12px;
   background: $border;
-  color: $bg;
+  color: $chrome-fg;
   padding: 2px 8px;
   font-size: 0.7rem;
   font-family: $font-code;
@@ -4175,7 +4343,7 @@ body.lightbox-open { overflow: hidden; }
   background: none;
   border: none;
   padding: 0 2px;
-  color: $bg;
+  color: $chrome-fg;
   font-family: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -4237,7 +4405,7 @@ body.lightbox-open { overflow: hidden; }
   inset: 0;
   pointer-events: none;
   z-index: 6;
-  font-family: 'HBIOS-SYS', 'Courier New', monospace;
+  font-family: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Courier New', monospace;
   color: #f4eede;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.6), 1px 1px 0 #000;
   letter-spacing: 0.06em;
@@ -4328,7 +4496,7 @@ body.lightbox-open { overflow: hidden; }
   align-items: center;
   gap: 4px;
   padding: 1px 7px 2px;
-  font-family: 'HBIOS-SYS', 'Courier New', monospace;
+  font-family: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Courier New', monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: #f4d97e;
@@ -4392,7 +4560,7 @@ body.dash-zoom-open { overflow: hidden; }
   position: absolute;
   top: 0;
   right: 0;
-  font-family: 'HBIOS-SYS', 'Courier New', monospace;
+  font-family: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Courier New', monospace;
   font-size: 13px;
   letter-spacing: 0.06em;
   color: #f4eede;
@@ -4408,7 +4576,7 @@ body.dash-zoom-open { overflow: hidden; }
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px 18px;
-  font-family: 'HBIOS-SYS', 'Courier New', monospace;
+  font-family: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Courier New', monospace;
   font-size: 12px;
   color: #a39c88;
   b { color: #f4d97e; font-weight: 400; }
@@ -4431,7 +4599,7 @@ body.dash-zoom-open { overflow: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'HBIOS-SYS', 'Courier New', monospace;
+  font-family: 'NeoDunggeunmo', 'HBIOS-SYS Symbols', 'Courier New', monospace;
   font-size: 15px;
   letter-spacing: 0.08em;
   color: #fff;
@@ -4446,4 +4614,925 @@ body.dash-zoom-open { overflow: hidden; }
   .dash-zoom-frame { width: 100%; padding-top: 44px; }
   .dash-zoom-stage { max-width: 100%; box-shadow: none; }
   .dash-zoom-close { right: 8px; }
+}
+
+// ═══════════════════════════════════════
+// v2 리디자인 — 테마 전환 · 창 공통 · 상단바/사이드바 · 글 목록/카드 · 글 상세
+// (위쪽 기존 규칙을 같은 선택자로 덮어쓰므로 파일 맨 끝에 둔다)
+// ═══════════════════════════════════════
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// 홈·목록 페이지 바탕 — 은은한 도트 그리드 (데스크톱 배경화면 느낌)
+body.is-home,
+body.is-list {
+  background-image: radial-gradient(var(--bg-dot) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+body.is-list .main-content { max-width: 1180px; }
+
+// ── 창(window) 공통 — 평면 2px 프레임 + 하드 섀도 ──
+.win {
+  background: $win;
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 $shadow;
+  color: $text;
+}
+
+.win-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  padding: 0 6px 0 10px;
+  background: $border;
+  color: $chrome-fg;
+  font-family: $font-code;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.win-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.win-badge {
+  flex-shrink: 0;
+  padding: 0 6px;
+  background: $chrome-fg;
+  color: $border;
+  font-size: 0.68rem;
+}
+
+.win-ctrl {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+}
+
+// 기존 창들도 같은 프레임으로 (베벨 → 평면)
+.search-window,
+.search-results,
+.floating-toc,
+.post-card,
+.about-project,
+.lightbox-frame,
+.post-content div.highlighter-rouge,
+.post-content table {
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 $shadow;
+}
+
+// Win95 버튼 눌림 상태 (토글형 버튼 공통)
+.window-btn[aria-pressed="true"] {
+  background: var(--btn-press);
+  box-shadow:
+    inset -1px -1px 0 $bevel-hi,
+    inset 1px 1px 0 $bevel-lo,
+    0 0 0 1px $bevel-edge;
+}
+
+// 카테고리 2글자 코드 칩
+.cat-code {
+  display: inline-block;
+  padding: 0 4px;
+  border: 1px solid var(--chip);
+  color: $amber;
+  font-family: $font-base;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+.cat-code--lg {
+  padding: 2px 8px;
+  border-width: 2px;
+  font-size: 1rem;
+}
+
+// ── 상단바 — 블로그명 · DOS 경로 · 테마 전환 ──
+.top-bar-brand,
+.top-bar-brand:visited {
+  font-family: $font-title;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $chrome-fg;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.top-bar-brand:hover { color: #000; }
+
+.top-bar-path {
+  font-size: 0.85rem;
+  color: var(--chrome-dim);
+  white-space: nowrap;
+}
+
+.theme-switch {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.theme-btn {
+  width: auto;
+  gap: 5px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+}
+
+.theme-btn svg,
+.theme-toggle svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  flex-shrink: 0;
+}
+
+.top-bar .window-controls { margin-left: 8px; }
+
+// 모바일 전용 단일 토글 — 현재 테마 아이콘 표시
+.theme-toggle { display: none; }
+:root[data-theme="dark"] .theme-toggle-sun,
+:root:not([data-theme="dark"]) .theme-toggle-moon { display: none; }
+
+// ── 사이드바 — 트리 기호 + 글 수, 다크=켜진 간판 / 라이트=꺼진 간판(hover 점등) ──
+@media (min-width: 769px) {
+  .sidebar-left {
+    background-color: var(--side);
+    border-right: 1px solid var(--line);
+    &::after { display: none; }
+  }
+}
+
+.nav-item.active,
+.nav-child.active { background: var(--row); }
+
+.nav-item:hover,
+.nav-child:hover { background: $surface-high; }
+
+.nav-count {
+  margin-left: auto;
+  font-size: 0.75em;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-tree {
+  margin-left: -24px;
+  margin-right: -4px;
+  color: var(--tree);
+  letter-spacing: -0.08em;
+}
+
+
+// ── 홈 카테고리 탭 — DOS 탭 스트립 ──
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  border-bottom: 2px solid var(--frame);
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border: 2px solid var(--line);
+    border-bottom: 0;
+    background: transparent;
+    color: var(--fg);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+
+    &:hover { color: var(--bright); border-color: var(--frame); }
+
+    &.active {
+      background: $border;
+      border-color: $border;
+      color: $chrome-fg;
+      .tab-count { color: var(--chrome-dim); }
+    }
+  }
+
+  .tab-count {
+    font-size: 0.75rem;
+    color: $text-muted;
+  }
+}
+
+// ── 글 카드 (카테고리·태그 목록) ──
+.post-list {
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 28px;
+}
+
+.post-card {
+  background: $win;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    filter: none;
+    transform: translate(-3px, -3px);
+    box-shadow: 7px 7px 0 $shadow;
+    border-color: var(--accent-fill);
+
+    .post-card-titlebar {
+      background: var(--accent-fill);
+      color: var(--accent-on);
+    }
+  }
+}
+
+.post-card-titlebar {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: none;
+  line-clamp: none;
+  font-size: 0.72rem;
+}
+
+.post-card-thumbnail {
+  background: var(--term-bg);
+
+  .nosignal { display: none; }
+
+  &.is-nosignal {
+    background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px);
+
+    .scanline-overlay { display: none; }
+    .nosignal {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+
+      span {
+        font-family: $font-base;
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+        color: var(--phosphor);
+        text-shadow: 0 0 8px rgba(85, 255, 85, 0.4);
+      }
+      small { font-size: 0.72rem; color: var(--term-dim); }
+    }
+  }
+}
+
+.post-card-content {
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.post-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-card-title {
+  margin: 0;
+  font-family: $font-title;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+.post-card-excerpt {
+  font-family: $font-content;
+  font-size: $font-content-size;
+  line-height: 1.5;
+  color: var(--sub);
+}
+
+.post-card-read { color: $amber; }
+
+// 페이징으로 숨긴 카드는 보기 방식과 무관하게 숨김
+.post-list .post-card.is-paged-out { display: none !important; }
+
+// 리스트 보기 — 썸네일 좌 + 정보 우, 발췌 1줄
+.post-list.is-list {
+  grid-template-columns: 1fr;
+  gap: 14px;
+
+  .post-card {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .post-card-titlebar { grid-column: 1 / -1; }
+  .post-card-thumbnail { height: 100%; }
+  .post-card-content { padding: 10px 16px 12px; }
+  .post-card-excerpt { -webkit-line-clamp: 1; line-clamp: 1; }
+}
+
+// ── 목록 페이지 상단 — 탐색기 툴바 + 제목 ──
+.explorer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 26px;
+  padding: 8px;
+  background: $border;
+  color: $chrome-fg;
+  box-shadow:
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    4px 4px 0 $shadow;
+  font-size: 0.85rem;
+}
+
+.explorer-btn {
+  width: 38px;
+  height: 30px;
+  text-decoration: none;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+}
+
+.explorer-address {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  background: #FFFFFF;
+  color: #1C1D20;
+  box-shadow: inset 1px 1px 0 $bevel-lo, inset -1px -1px 0 $bevel-hi;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.explorer-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  select {
+    height: 30px;
+    padding: 0 6px;
+    background: #FFFFFF;
+    color: #1C1D20;
+    border: none;
+    box-shadow: inset 1px 1px 0 $bevel-lo, inset -1px -1px 0 $bevel-hi;
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+}
+
+.explorer-views {
+  display: flex;
+  gap: 4px;
+}
+
+.list-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 28px;
+
+  .page-heading {
+    margin: 0;
+    gap: 14px;
+    font-family: $font-title;
+    font-size: 2.3rem;
+    color: var(--text);
+  }
+}
+
+.list-count {
+  font-size: 0.9rem;
+  color: $text-muted;
+}
+
+// ── 글 상세 ──
+.read-progress {
+  position: fixed;
+  top: 28px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 250;
+  background: tone(0.12);
+  pointer-events: none;
+}
+
+.read-progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent-fill);
+}
+
+.post-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: 22px;
+  font-size: 0.85rem;
+  color: $text-muted;
+
+  a, a:visited {
+    color: $text-muted;
+    text-decoration: none;
+  }
+  a:hover { color: $amber; }
+}
+
+.post-breadcrumb-file {
+  color: $text;
+  overflow-wrap: anywhere;
+}
+
+.post-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+  padding-bottom: 26px;
+  border-bottom: 2px dashed var(--line);
+}
+
+.post-header .post-meta {
+  order: -1;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  text-transform: none;
+}
+
+.post-title {
+  margin: 0;
+  font-family: $font-title;
+  font-size: 2.6rem;
+  font-weight: 700 !important;
+  line-height: 1.25;
+  color: var(--text);
+  text-transform: none;
+  word-break: keep-all;
+}
+
+.post-title-en { margin: 0; }
+
+.post-tags {
+  margin-top: 4px;
+
+  .tag-link {
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
+
+    &:hover {
+      color: $amber;
+      border-color: $amber;
+    }
+  }
+}
+
+.post-content {
+  color: var(--fg);
+
+  h2 {
+    font-family: $font-title;
+    font-size: 1.75rem;
+    color: var(--h2) !important;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--line);
+
+    &::before {
+      content: '## ';
+      color: $text-muted;
+    }
+  }
+
+  // 코드 블록 copy 버튼 — 타이틀바(::before) 오른쪽
+  div.highlighter-rouge .code-copy {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    width: auto;
+    height: 20px;
+    padding: 0 8px;
+    font-family: $font-code;
+    font-size: 0.7rem;
+  }
+}
+
+.post-eof {
+  margin: 48px 0 0;
+  padding-top: 22px;
+  border-top: 2px dashed var(--line);
+  text-align: center;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.post-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.post-nav-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: $win;
+  border: 2px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+
+  &:visited { color: var(--text); }
+  &:hover { color: var(--bright); border-color: var(--frame); }
+  &.is-empty { visibility: hidden; }
+}
+
+.post-nav-next { text-align: right; }
+
+.post-nav-label {
+  font-size: 0.78rem;
+  color: $text-muted;
+}
+
+.post-nav-title {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.related-posts {
+  margin-top: 40px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.related-title {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: $amber;
+  text-transform: none;
+
+  span { color: $text-muted; }
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 20px;
+}
+
+.related-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    color: $text;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 $shadow;
+  }
+}
+
+.related-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--term-bg);
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.related-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+
+  time { font-size: 0.75rem; color: $text-muted; }
+}
+
+.related-name {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+// 댓글 — comments.log 창
+.comments-section {
+  margin-top: 40px;
+  padding-top: 0;
+  border-top: none;
+  background: $win;
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 $shadow;
+}
+
+.comments-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+  padding: 0 8px 0 10px;
+  background: $border;
+  color: $chrome-fg;
+  font-family: $font-code;
+  font-size: 0.75rem;
+}
+
+.comments-body { padding: 16px 18px 18px; }
+
+.comments-title {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: $text-muted;
+  text-transform: none;
+}
+
+#comment-nickname,
+#comment-content {
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--chip);
+}
+
+.comment-submit {
+  background: $border;
+  color: $chrome-fg;
+  border: none;
+  text-transform: none;
+  box-shadow:
+    inset 1px 1px 0 $bevel-hi,
+    inset -1px -1px 0 $bevel-lo,
+    0 0 0 1px $bevel-edge;
+
+  &:hover {
+    background: $border;
+    transform: none;
+    box-shadow:
+      inset 1px 1px 0 $bevel-hi,
+      inset -1px -1px 0 $bevel-lo,
+      0 0 0 1px $bevel-edge;
+  }
+
+  &:active {
+    transform: none;
+    background: var(--btn-press);
+    box-shadow:
+      inset -1px -1px 0 $bevel-hi,
+      inset 1px 1px 0 $bevel-lo,
+      0 0 0 1px $bevel-edge;
+  }
+}
+
+.comment-item {
+  background: $surface-lowest;
+  border: 1px solid var(--line);
+}
+
+// 플로팅 TOC — 진행 바 + h2 목록 + 링크 복사/맨 위로
+.floating-toc { background: $win; }
+
+.toc-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 4px;
+  font-size: 0.72rem;
+  color: $text-muted;
+}
+
+.toc-progress-bar {
+  flex: 1 1 auto;
+  height: 10px;
+  padding: 1px;
+  border: 1px solid var(--chip);
+  box-sizing: border-box;
+}
+
+.toc-progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent-fill);
+}
+
+.floating-toc .toc-list {
+  padding: 6px 4px 8px;
+  max-height: calc(100vh - 300px);
+}
+
+.toc-list li a {
+  position: relative;
+  padding: 5px 8px 5px 22px;
+  border-left: none;
+  color: var(--fg);
+  font-size: 0.8rem;
+  line-height: 1.45;
+
+  &:hover { color: var(--bright); }
+
+  &.active {
+    background: var(--row);
+    color: $amber;
+
+    &::before {
+      content: '▶';
+      position: absolute;
+      left: 7px;
+      top: 6px;
+      font-size: 0.6rem;
+    }
+  }
+}
+
+.toc-list li.toc-h3 a { padding-left: 32px; font-size: 0.75rem; }
+
+.toc-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px dashed var(--line);
+
+  .window-btn {
+    flex: 1 1 0;
+    width: auto;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+}
+
+.post-content div.language-gitignore.highlighter-rouge::before { content: '.gitignore'; }
+
+// About 배너 — 흰 외곽선·손글씨 일러스트라 라이트 테마에선 어두운 사진 창에 담는다
+:root:not([data-theme="dark"]) .about-banner img {
+  box-sizing: border-box;
+  padding: 14px 18px 0;
+  background: var(--term-bg);
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 $shadow;
+}
+
+// ── 반응형 ──
+// 좁은 데스크톱 — 상단바 가운데 상태와 좌측 경로가 겹치지 않게 단계적으로 숨김
+@media (max-width: 1299px) {
+  .top-bar-path { display: none; }
+}
+
+// 중간 폭 — DIR 목록 TAGS 칸이 제목을 잘라먹지 않게 숨김
+@media (min-width: 769px) and (max-width: 1279px) {
+  .dir-cols,
+  .dir-row { grid-template-columns: 92px 44px minmax(0, 1fr); }
+  .dir-tags { display: none; }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .status-loc,
+  .status-loc + .status-sep,
+  #status-weather,
+  #status-weather + .status-sep { display: none; }
+}
+
+@media (max-width: 768px) {
+  // 상단바: menu · 블로그명 · 시각 · 테마 토글
+  .top-bar-brand { font-size: 0.95rem; }
+  .theme-switch { display: none; }
+  .top-bar-title {
+    position: static;
+    transform: none;
+    margin-left: auto;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    width: 30px;
+    margin-left: 6px;
+  }
+
+  // 홈: 검색 → 콘솔 → 플러그인 → README → 글 목록 순서로 한 줄 쌓기
+  .home { padding: 0 16px 40px; }
+  .home-top {
+    flex-direction: column;
+    gap: 22px;
+  }
+  .home-side { display: contents; }
+  .home-search { order: 1; }
+  .hero-section {
+    order: 2;
+    width: min(100%, calc((100vh - 72px) / 1.634));
+  }
+  .home-plugins { order: 3; margin-top: 6px; }
+  .home-greeting { order: 4; }
+
+  .home-plugins-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .plugin-card-sticker { width: 50px; top: -12px; left: -10px; }
+  .plugin-card-titlebar { padding-left: 42px; font-size: 0.65rem; }
+  .plugin-card-meta,
+  .plugin-card-desc { display: none; }
+  .plugin-card-body { padding: 8px 10px 10px; }
+  .plugin-card-name { font-size: 0.9rem; }
+
+  .home-posts { margin-top: 32px; }
+  .category-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -16px;
+    padding: 0 16px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 0 12px;
+      font-size: 0.85rem;
+    }
+  }
+
+  .home-featured-thumb {
+    flex-basis: 100%;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+  .home-featured-text { padding: 14px 14px 16px; }
+  .home-featured-title { font-size: 1.4rem; }
+
+  .dir-head,
+  .dir-cols { display: none; }
+  .dir-list > li + li { border-top: 1px dashed var(--line); }
+  .dir-row {
+    grid-template-columns: max-content 1fr;
+    grid-template-areas: "date cat" "name name";
+    row-gap: 4px;
+    column-gap: 8px;
+    padding: 12px 14px;
+    &::before { display: none; }
+  }
+  .dir-date { grid-area: date; }
+  .dir-cat { grid-area: cat; }
+  .dir-name { grid-area: name; white-space: normal; }
+  .dir-tags { display: none; }
+
+  // 글 목록 페이지
+  .list-heading .page-heading { font-size: 1.7rem; }
+  .post-list.is-list .post-card { grid-template-columns: 1fr; }
+  .post-list.is-list .post-card-thumbnail { display: none; }
+
+  // 글 상세
+  .post-title { font-size: 1.8rem; }
+  .post-content h2 { font-size: 1.35rem; }
 }

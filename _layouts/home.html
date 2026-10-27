@@ -3,9 +3,10 @@ layout: default
 ---
 
 <div class="home">
-  {%- include search.html -%}
-
-  <section class="hero-section">
+  <div class="home-top">
+  <section class="hero-section" aria-label="몽구랑 산책가자 미니게임">
+    <!-- console-crop: PNG 좌우·상하 투명 여백을 잘라 콘솔 본체가 칸을 꽉 채우게 (hit area 좌표는 frame 기준이라 그대로) -->
+    <div class="console-crop">
     <div class="console-frame">
       <img class="console-img" src="{{ '/assets/images/crt/GameMode.png' | relative_url }}" alt="Retro Console" draggable="false">
 
@@ -36,9 +37,24 @@ layout: default
       <div class="analog-stick analog-left" id="analog-left"><div class="analog-cap" id="analog-cap-left"></div></div>
       <div class="analog-stick analog-right" id="analog-right"><div class="analog-cap" id="analog-cap-right"></div></div>
     </div>
+    </div>
   </section>
 
   <div class="home-side">
+  {%- include search.html -%}
+
+  <section class="home-greeting">
+    <div class="greeting-box">
+      <div class="greeting-titlebar">
+        <span class="greeting-titlebar-text">README.txt</span>
+      </div>
+      <div class="greeting-body">
+        <pre class="greeting-ascii" data-invader="squid" aria-hidden="true" title="drag to spin"></pre>
+        <pre class="greeting-ascii" data-invader="crab" aria-hidden="true" title="drag to spin"></pre>
+        <pre class="greeting-ascii" data-invader="octopus" aria-hidden="true" title="drag to spin"></pre>
+      </div>
+    </div>
+  </section>
 
   <section class="home-plugins">
     <div class="home-plugins-grid">
@@ -50,6 +66,11 @@ layout: default
         <div class="plugin-card-thumb">
           <img src="{{ '/assets/images/logo/ba.png' | relative_url }}" alt="Blueprint Analyzer" loading="lazy">
         </div>
+        <div class="plugin-card-body">
+          <span class="plugin-card-meta">2026.04 출시 · 다운로드 1,000회+</span>
+          <strong class="plugin-card-name">Blueprint Analyzer</strong>
+          <span class="plugin-card-desc">BP To JSON or LLM Friendly Text로 변환해주는 엔진 툴 플러그인</span>
+        </div>
       </a>
       <a class="plugin-card" href="https://fab.com/s/dbe5befc72f6" target="_blank" rel="noopener">
         <img class="plugin-card-sticker" src="{{ '/assets/images/logo/New.png' | relative_url }}" alt="" aria-hidden="true">
@@ -59,43 +80,115 @@ layout: default
         <div class="plugin-card-thumb">
           <img src="{{ '/assets/images/logo/EditorCursorSkin.jpg' | relative_url }}" alt="Editor Cursor Skin" loading="lazy">
         </div>
+        <div class="plugin-card-body">
+          <span class="plugin-card-meta">2026.06 출시 · 다운로드 100회+</span>
+          <strong class="plugin-card-name">Editor Cursor Skin</strong>
+          <span class="plugin-card-desc">에디터 마우스 커서를 이미지·GIF로 교체하는 엔진 툴 플러그인</span>
+        </div>
       </a>
     </div>
   </section>
 
-  <section class="home-greeting">
-    <div class="greeting-box">
-      <div class="greeting-titlebar">
-        <span class="greeting-titlebar-text">README.txt</span>
-      </div>
-      <div class="greeting-body">
-        <pre class="greeting-ascii" id="ascii-invader" aria-hidden="true" title="drag to spin"></pre>
-        <div class="greeting-terminal" contenteditable="true" spellcheck="false" aria-label="terminal"><div>hello world!</div><div>제 블로그 방문해주셔서 감사해요!</div><div>오늘도 좋은 하루 되세요 😁</div></div>
-      </div>
-    </div>
-  </section>
+  </div><!-- /.home-side -->
+  </div><!-- /.home-top -->
 
-  <section class="latest-posts">
-    <div class="latest-posts-grid">
-      {% for post in site.posts limit:3 %}
-        <a class="latest-post-card" href="{{ post.url | relative_url }}">
-          <div class="latest-post-card-titlebar">
-            <span class="latest-post-card-titlebar-text">{{ post.title | downcase }}.md</span>
-          </div>
-          <div class="latest-post-thumb">
-            {% if post.thumbnail %}{% assign card_thumb = post.thumbnail %}{% else %}{% assign card_thumb = '/assets/og/' | append: post.slug | append: '.png' %}{% endif %}
-            <img src="{{ card_thumb | relative_url }}" alt="{{ post.title | escape }}" loading="lazy" onerror="this.style.display='none'">
-          </div>
-          <div class="latest-post-meta">
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y.%m.%d' }}</time>
-            <h3 class="latest-post-title">{{ post.title }}</h3>
+  {%- comment -%} 글 목록 — 최신 글 1개는 크게, 나머지는 DOS dir 목록 {%- endcomment -%}
+  {%- assign latest = site.posts.first -%}
+  {%- if latest.thumbnail -%}
+    {%- assign latest_thumb = latest.thumbnail -%}
+  {%- else -%}
+    {%- assign latest_thumb = '/assets/og/' | append: latest.slug | append: '.png' -%}
+  {%- endif -%}
+  {%- assign dir_total = site.posts.size | minus: 1 -%}
+  {%- if dir_total > 10 -%}{%- assign dir_shown = 10 -%}{%- else -%}{%- assign dir_shown = dir_total -%}{%- endif -%}
+  <section class="home-posts" aria-labelledby="home-posts-title">
+    <h2 id="home-posts-title" class="sr-only">글 목록</h2>
+    {% include category-tabs.html %}
+
+    <div class="home-posts-grid">
+      <div class="home-posts-main">
+        <a class="win home-featured" href="{{ latest.url | relative_url }}">
+          <div class="win-titlebar"><span class="win-title">{{ latest.slug }}.md</span><span class="win-badge">LATEST</span></div>
+          <div class="home-featured-body">
+            <div class="home-featured-thumb">
+              <img src="{{ latest_thumb | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none'">
+              <div class="scanline-overlay" aria-hidden="true"></div>
+            </div>
+            <div class="home-featured-text">
+              <p class="home-featured-meta">
+                <time datetime="{{ latest.date | date_to_xmlschema }}">{{ latest.date | date: '%Y.%m.%d' }}</time>
+                <span aria-hidden="true">·</span>
+                {%- assign latest_cat = latest.categories | first %}
+                {% include cat-code.html cat=latest_cat %}
+                <span>{{ latest_cat | replace: 'unrealengine', 'unreal' }}</span>
+              </p>
+              <h3 class="home-featured-title">{{ latest.title | escape }}</h3>
+              <p class="home-featured-excerpt">{{ latest.excerpt | strip_html | strip_newlines | truncate: 160 }}</p>
+              <span class="read-more">→ read full log</span>
+            </div>
           </div>
         </a>
-      {% endfor %}
+
+        <section class="win dir-window" aria-labelledby="dir-title">
+          <div class="win-titlebar"><span class="win-title" id="dir-title">C:\KEEM\POSTS\*.md</span><span class="win-ctrl" aria-hidden="true">─ ▢ ✕</span></div>
+          <p class="dir-head">Directory of C:\KEEM\POSTS</p>
+          <div class="dir-cols" aria-hidden="true">
+            <span class="dir-date">DATE</span><span class="dir-cat">CAT</span><span class="dir-name">TITLE</span><span class="dir-tags">TAGS</span>
+          </div>
+          <ol class="dir-list" id="dir-list">
+            {%- for post in site.posts offset: 1 %}
+            <li>
+              <a class="dir-row" href="{{ post.url | relative_url }}">
+                <time class="dir-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y.%m.%d' }}</time>
+                {%- assign row_cat = post.categories | first %}
+                <span class="dir-cat">{% include cat-code.html cat=row_cat %}</span>
+                <span class="dir-name">{{ post.title | escape }}</span>
+                <span class="dir-tags">{% for t in post.tags limit: 3 %}#{{ t }} {% endfor %}</span>
+              </a>
+            </li>
+            {%- endfor %}
+          </ol>
+          <div class="dir-foot">
+            <span class="dir-count"><span id="dir-shown">{{ dir_shown }}</span> File(s) shown · {{ site.posts.size }} total</span>
+            {%- if dir_total > 10 %}
+            <button type="button" class="window-btn dir-more" id="dir-more" aria-expanded="false" aria-controls="dir-list" data-total="{{ dir_total }}">dir /a — 전체 보기</button>
+            {%- endif %}
+          </div>
+        </section>
+      </div>
+
+      <aside class="home-posts-side" aria-label="소개와 태그">
+        <section class="win about-mini" aria-labelledby="about-mini-title">
+          <div class="win-titlebar"><span class="win-title" id="about-mini-title">about.exe</span><span class="win-ctrl" aria-hidden="true">─ ▢ ✕</span></div>
+          <div class="about-mini-body">
+            <img class="about-mini-avatar" src="{{ '/assets/images/profileImage/pixel-avatar.png' | relative_url }}" alt="복셀 스타일 아바타와 강아지" loading="lazy">
+            <p class="about-mini-name">김민수 <span>· Minsu Kim</span></p>
+            <p class="about-mini-role">UE 클라이언트 개발자</p>
+            <p class="about-mini-tagline">재밌는걸 멋지게 오래하기!</p>
+            <a class="window-btn about-mini-btn" href="{{ '/about/' | relative_url }}">about.exe 열기</a>
+          </div>
+        </section>
+
+        {%- assign tag_pairs = "" | split: "" -%}
+        {%- for tag in site.tags -%}
+          {%- assign tag_n = tag[1].size | prepend: "000" | slice: -3, 3 -%}
+          {%- assign tag_pair = tag_n | append: "|" | append: tag[0] -%}
+          {%- assign tag_pairs = tag_pairs | push: tag_pair -%}
+        {%- endfor -%}
+        {%- assign tag_pairs = tag_pairs | sort | reverse %}
+        <section class="win tags-mini" aria-labelledby="tags-mini-title">
+          <div class="win-titlebar"><span class="win-title" id="tags-mini-title">tags.cfg</span><span class="win-ctrl" aria-hidden="true">─ ▢ ✕</span></div>
+          <div class="tags-mini-body">
+            {%- for pair in tag_pairs limit: 12 -%}
+              {%- assign tp = pair | split: "|" %}
+            <a class="tag-chip" href="{{ '/tag/' | append: tp[1] | relative_url }}">{{ tp[1] }} <span>{{ tp[0] | plus: 0 }}</span></a>
+            {%- endfor %}
+          </div>
+          <a class="tags-mini-all" href="{{ '/tags/' | relative_url }}">→ 전체 태그 보기</a>
+        </section>
+      </aside>
     </div>
   </section>
-
-  </div><!-- /.home-side -->
 </div>
 
 <script>
@@ -161,93 +254,6 @@ function setupGamepadUI() {
 }
 
 document.addEventListener('DOMContentLoaded', setupGamepadUI);
-
-// README.TXT 터미널 — 각 줄을 <div>로 감싸고 "> "는 CSS ::before로만 그림
-// (사용자가 직접 지울 수 없게). Enter 누르면 캐럿에서 줄 분할.
-(function setupReadmeTerminal() {
-  var term = document.querySelector('.greeting-terminal');
-  if (!term) return;
-
-  function getLine(node) {
-    while (node && node !== term && node.parentNode !== term) node = node.parentNode;
-    return (node && node.parentNode === term) ? node : null;
-  }
-
-  term.addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
-    e.preventDefault();
-    var sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
-    var range = sel.getRangeAt(0);
-    range.deleteContents();
-
-    var line = getLine(range.startContainer);
-    var newLine = document.createElement('div');
-
-    if (line) {
-      var tail = document.createRange();
-      tail.setStart(range.startContainer, range.startOffset);
-      tail.setEndAfter(line.lastChild || line);
-      var frag = tail.extractContents();
-      newLine.appendChild(frag);
-      if (!newLine.firstChild) newLine.appendChild(document.createElement('br'));
-      if (!line.firstChild) line.appendChild(document.createElement('br'));
-      line.parentNode.insertBefore(newLine, line.nextSibling);
-    } else {
-      newLine.appendChild(document.createElement('br'));
-      term.appendChild(newLine);
-    }
-
-    var newRange = document.createRange();
-    if (newLine.firstChild) {
-      newRange.setStartBefore(newLine.firstChild);
-    } else {
-      newRange.setStart(newLine, 0);
-    }
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    // 새 줄을 뷰포트로 스크롤
-    if (newLine.scrollIntoView) newLine.scrollIntoView({ block: 'nearest' });
-  });
-
-  // 붙여넣기 — 줄바꿈을 <div>로 분리
-  term.addEventListener('paste', function (e) {
-    e.preventDefault();
-    var text = (e.clipboardData || window.clipboardData).getData('text');
-    if (!text) return;
-    var lines = text.split(/\r?\n/);
-    var sel = window.getSelection();
-    if (!sel.rangeCount) return;
-    var range = sel.getRangeAt(0);
-    range.deleteContents();
-
-    var line = getLine(range.startContainer);
-    if (!line) {
-      line = document.createElement('div');
-      term.appendChild(line);
-    }
-    // 첫 줄은 현재 위치에 텍스트로 삽입
-    var firstNode = document.createTextNode(lines[0]);
-    range.insertNode(firstNode);
-    range.setStartAfter(firstNode);
-    range.collapse(true);
-
-    // 나머지는 새 div로 추가
-    for (var i = 1; i < lines.length; i++) {
-      var d = document.createElement('div');
-      d.textContent = lines[i] || '';
-      if (!d.firstChild) d.appendChild(document.createElement('br'));
-      line.parentNode.insertBefore(d, line.nextSibling);
-      line = d;
-    }
-    var endRange = document.createRange();
-    endRange.selectNodeContents(line);
-    endRange.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(endRange);
-  });
-})();
 </script>
 <script type="importmap">
   {"imports":{
@@ -276,3 +282,18 @@ document.addEventListener('DOMContentLoaded', setupGamepadUI);
   })();
 </script>
 <script defer src="{{ '/assets/js/invader.js' | relative_url }}"></script>
+<script>
+  // DIR 목록 — 처음 10개만 보이고 "dir /a" 로 전체 펼치기
+  (function () {
+    var btn = document.getElementById('dir-more');
+    var list = document.getElementById('dir-list');
+    var shown = document.getElementById('dir-shown');
+    if (!btn || !list) return;
+    btn.addEventListener('click', function () {
+      var open = list.classList.toggle('is-expanded');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.textContent = open ? 'dir — 접기' : 'dir /a — 전체 보기';
+      if (shown) shown.textContent = open ? btn.getAttribute('data-total') : '10';
+    });
+  })();
+</script>

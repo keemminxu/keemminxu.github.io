@@ -4,8 +4,9 @@ title: "Category: Study"
 permalink: /category/study/
 ---
 
-<div class="category-page">
-  <h1 class="page-heading"><span class="page-heading-icon material-symbols-outlined" aria-hidden="true">menu_book</span>study</h1>
+<div class="category-page list-page">
+  {%- assign list_count = site.categories['study'].size | default: 0 -%}
+  {% include list-header.html code="ST" label="study" path="POSTS\STUDY" up="/category/tech/" count=list_count %}
 
   <div class="post-list">
     {% assign posts = site.categories['study'] %}

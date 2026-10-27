@@ -1,16 +1,14 @@
 {% comment %}
-  카테고리 탭 컴포넌트. page.url 기반으로 활성 탭을 자동 표시한다.
-  홈페이지(/)에서는 "ALL"이 활성화된다.
+  홈 글 목록 위 카테고리 탭 (DOS 탭 스트립). ALL은 홈, 나머지는 카테고리 페이지로 이동하며 글 수를 함께 표시한다.
 {% endcomment %}
-
-<nav class="category-tabs">
-  <a href="{{ '/' | relative_url }}"
-     class="tab {% if page.url == '/' or page.url == '/index.html' %}active{% endif %}">ALL</a>
-  {% assign categories = site.categories | sort %}
-  {% for cat in categories %}
-    <a href="{{ '/category/' | append: cat[0] | relative_url }}"
-       class="tab {% if page.url contains cat[0] %}active{% endif %}">
-      {{ cat[0] | upcase }}
-    </a>
-  {% endfor %}
+{%- assign tab_keys = "unrealengine,unity,godot,study,etc" | split: "," -%}
+{%- assign tab_labels = "UNREAL,UNITY,GODOT,STUDY,ETC" | split: "," -%}
+<nav class="category-tabs" aria-label="카테고리">
+  <a href="{{ '/' | relative_url }}" class="tab{% if page.url == '/' %} active{% endif %}"{% if page.url == '/' %} aria-current="page"{% endif %}>ALL <span class="tab-count">{{ site.posts.size }}</span></a>
+  {%- for key in tab_keys -%}
+    {%- assign cat_posts = site.categories[key] -%}
+    {%- if cat_posts and cat_posts.size > 0 %}
+  <a href="{{ '/category/' | append: key | append: '/' | relative_url }}" class="tab">{{ tab_labels[forloop.index0] }} <span class="tab-count">{{ cat_posts.size }}</span></a>
+    {%- endif -%}
+  {%- endfor %}
 </nav>

@@ -4,8 +4,9 @@ title: "Category: Unity"
 permalink: /category/unity/
 ---
 
-<div class="category-page">
-  <h1 class="page-heading"><span class="page-heading-icon nav-child-logo nav-child-logo--unity" aria-hidden="true"></span>unity</h1>
+<div class="category-page list-page">
+  {%- assign list_count = site.categories['unity'].size | default: 0 -%}
+  {% include list-header.html code="UN" label="unity" path="POSTS\UNITY" up="/category/tech/" count=list_count %}
 
   <div class="post-list">
     {% assign posts = site.categories['unity'] | sort: 'date' | reverse %}

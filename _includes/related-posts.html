@@ -1,6 +1,6 @@
 {% comment %}
   태그 기반 관련 포스트를 최대 3개 표시한다.
-  공통 태그가 1개 이상인 포스트를 최신순으로 표시.
+  공통 태그가 1개 이상인 포스트를 최신순으로 표시 — 썸네일 달린 미니 창 카드.
 {% endcomment %}
 
 {% assign max_related = 3 %}
@@ -24,15 +24,28 @@
 {% endfor %}
 
 {% if related.size > 0 %}
-<div class="related-posts">
-  <h3>관련 포스트</h3>
-  <ul>
+<section class="related-posts" aria-labelledby="related-title">
+  <h2 class="related-title" id="related-title">related/ <span>— 같이 보면 좋은 글</span></h2>
+  <div class="related-grid">
     {% for post in related limit: max_related %}
-    <li>
-      <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
-      <a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
-    </li>
+      {%- assign rel_slug = post.url | split: '/' | last -%}
+      {%- if post.thumbnail -%}
+        {%- assign rel_thumb = post.thumbnail -%}
+      {%- else -%}
+        {%- assign rel_thumb = '/assets/og/' | append: rel_slug | append: '.png' -%}
+      {%- endif %}
+    <a class="win related-card" href="{{ post.url | relative_url }}">
+      <div class="win-titlebar"><span class="win-title">{{ rel_slug }}.md</span></div>
+      <div class="related-thumb">
+        <img src="{{ rel_thumb | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none'">
+        <div class="scanline-overlay" aria-hidden="true"></div>
+      </div>
+      <div class="related-body">
+        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y.%m.%d" }}</time>
+        <span class="related-name">{{ post.title | escape }}</span>
+      </div>
+    </a>
     {% endfor %}
-  </ul>
-</div>
+  </div>
+</section>
 {% endif %}

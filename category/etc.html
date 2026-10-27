@@ -4,8 +4,9 @@ title: "Category: etc"
 permalink: /category/etc/
 ---
 
-<div class="category-page">
-  <h1 class="page-heading"><span class="page-heading-icon material-symbols-outlined" aria-hidden="true">folder</span>etc</h1>
+<div class="category-page list-page">
+  {%- assign list_count = site.categories['etc'].size | default: 0 -%}
+  {% include list-header.html code="ET" label="etc" path="POSTS\ETC" up="/category/tech/" count=list_count %}
 
   <div class="post-list">
     {% assign posts = site.categories['etc'] %}

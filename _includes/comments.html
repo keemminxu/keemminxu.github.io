@@ -3,15 +3,19 @@
   data-supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uYXRkYnBzY2J2aGhzeHN0dmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MDY4MzAsImV4cCI6MjA5MDQ4MjgzMH0.8iItsIbd06Sbi0PSt_4FAVGlEd8YdsTWL3xztszVieE"
   data-post-slug="{{ page.slug }}">
 
-  <h2 class="comments-title">댓글</h2>
+  <div class="comments-titlebar" aria-hidden="true"><span>comments.log</span><span>─ ▢ ✕</span></div>
 
-  <form class="comment-form" id="comment-form">
-    <input type="text" id="comment-nickname" placeholder="닉네임 (선택)" maxlength="20" aria-label="댓글 닉네임">
-    <textarea id="comment-content" placeholder="댓글을 남겨주세요" rows="3" maxlength="1000" required aria-label="댓글 내용"></textarea>
-    <div class="comment-form-actions">
-      <button type="submit" class="comment-submit">등록</button>
-    </div>
-  </form>
+  <div class="comments-body">
+    <h2 class="comments-title">&gt; 댓글</h2>
 
-  <div class="comments-list" id="comments-list"></div>
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-nickname" placeholder="닉네임 (선택)" maxlength="20" aria-label="댓글 닉네임">
+      <textarea id="comment-content" placeholder="댓글을 남겨주세요" rows="3" maxlength="1000" required aria-label="댓글 내용"></textarea>
+      <div class="comment-form-actions">
+        <button type="submit" class="comment-submit">send.exe</button>
+      </div>
+    </form>
+
+    <div class="comments-list" id="comments-list"></div>
+  </div>
 </section>

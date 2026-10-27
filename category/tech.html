@@ -4,18 +4,18 @@ title: "Category: Tech"
 permalink: /category/tech/
 ---
 
-<div class="category-page">
-  <h1 class="page-heading"><span class="page-heading-icon material-symbols-outlined" aria-hidden="true">terminal</span>tech</h1>
+{% comment %} tech 그룹은 unrealengine / unity / godot / study / etc 합집합 {% endcomment %}
+{% assign tech_cats = "unrealengine,unity,godot,study,etc" | split: "," %}
+{% assign tech_posts = "" | split: "" %}
+{% for cat in tech_cats %}
+  {% if site.categories[cat] %}
+    {% assign tech_posts = tech_posts | concat: site.categories[cat] %}
+  {% endif %}
+{% endfor %}
+{% assign tech_posts = tech_posts | uniq %}
 
-  {% comment %} tech 그룹은 unrealengine / unity / godot / study / etc 합집합 {% endcomment %}
-  {% assign tech_cats = "unrealengine,unity,godot,study,etc" | split: "," %}
-  {% assign tech_posts = "" | split: "" %}
-  {% for cat in tech_cats %}
-    {% if site.categories[cat] %}
-      {% assign tech_posts = tech_posts | concat: site.categories[cat] %}
-    {% endif %}
-  {% endfor %}
-  {% assign tech_posts = tech_posts | uniq %}
+<div class="category-page list-page">
+  {% include list-header.html code="TE" label="tech" path="POSTS\TECH" up="/" count=tech_posts.size %}
 
   <div class="post-list">
     {% if tech_posts.size > 0 %}

@@ -1,9 +1,11 @@
 ---
 layout: default
 ---
+{%- assign tag_path = 'TAGS\' | append: page.tag | upcase -%}
+{%- assign tag_count = site.tags[page.tag].size | default: 0 -%}
 
-<div class="tag-page">
-  <h1 class="page-heading">{{ page.tag }}</h1>
+<div class="tag-page list-page">
+  {% include list-header.html code="#" label=page.tag path=tag_path up="/tags/" count=tag_count %}
 
   <div class="post-list">
     {% assign sorted_posts = site.posts | sort: 'date' | reverse %}
