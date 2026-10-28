@@ -1,6 +1,6 @@
 // 사이드바 LED 전광판 — 이미지(LED_SIGN.png)의 화면 칸 위 캔버스에 도트를 직접 그린다
 // 윗줄: OPEN 24 HOURS (5×7 픽셀 글꼴, 네온 점멸 — OPEN 초록 · 24 HOURS 빨강)
-// 아랫줄: 강아지 몽구가 잔디 위를 왔다 갔다 산책 (가끔 냄새 맡기 · 헥헥 · 점프)
+// 아랫줄: 갈색 푸들 호두가 잔디 위를 왔다 갔다 산책 (가끔 냄새 맡기 · 헥헥 · 점프)
 (function () {
   'use strict';
 
@@ -73,54 +73,54 @@
     }
   })();
 
-  // ── 아랫줄: 몽구 (셸티) — 오른쪽을 보는 원본, 왼쪽으로 걸을 땐 좌우 반전 ──
-  // o 세이블 · d 진한 세이블(귀·등) · w 흰 털 · p 혀 · h 하트
-  var DOG_RGB = { o: [255, 178, 30], d: [255, 110, 20], w: [255, 240, 218], p: [255, 100, 140], h: [255, 80, 130] };
+  // ── 아랫줄: 호두 (갈색 토이 푸들) — 오른쪽을 보는 원본, 왼쪽으로 걸을 땐 좌우 반전 ──
+  // 머리 위 곱슬 털 · 길게 늘어진 귀 · 방울 꼬리. 몸통 10줄 + 다리 4줄
+  // o 갈색 털 · d 진한 갈색(귀·그늘·발) · l 밝은 캐러멜(곱슬·꼬리 방울) · n 코 · p 혀 · h 하트
+  var DOG_RGB = { o: [205, 120, 58], d: [138, 70, 32], l: [240, 168, 98], n: [95, 48, 26], p: [255, 100, 140], h: [255, 80, 130] };
   var BODY = [
-    '.............d..d.....',
-    '............dd.dd.....',
-    '...........oooooo.....',
-    'ww.........ooooooo....',
-    'ooo........oooo.ooo...',
-    '.ooo.......oooooooww..',
-    '..oo.....wwwooooww....',
-    '..oddddddwwwwwwww.....',
-    '..ooooooowwwwwww......',
-    '..oooooooowwwww.......',
-    '...ooooooowwww........'
+    '..ll.........dlld....',
+    '.llll.......dllllo...',
+    '.llll......dlooooo...',
+    '..ll......ddloo.ooln.',
+    '...l......dddoooool..',
+    '...oooooo.dddlooo....',
+    '..oolooolodddoooo....',
+    '..ooloooooddooool....',
+    '..oloooooloooool.....',
+    '...ooooooooooo.......'
   ];
-  var BODY_WAG = BODY.slice();       // 꼬리 내린 프레임 — 걸을 때 번갈아 흔든다
-  BODY_WAG[3] = '...........ooooooo....';
-  BODY_WAG[4] = '...........oooo.ooo...';
-  BODY_WAG[5] = 'ww.........oooooooww..';
-  BODY_WAG[6] = 'oooo.....wwwooooww....';
+  var BODY_WAG = BODY.slice();       // 꼬리 방울을 흔든 프레임 — 걸을 때 번갈아
+  BODY_WAG[0] = '.............dlld....';
+  BODY_WAG[1] = '.ll.........dllllo...';
+  BODY_WAG[2] = 'llll.......dlooooo...';
+  BODY_WAG[3] = 'llll......ddloo.ooln.';
+  BODY_WAG[4] = '.lll......dddoooool..';
   var SNIFF = [                       // 고개 숙여 냄새 맡기
-    '......................',
-    '......................',
-    '..............d..d....',
-    'ww...........dd.dd....',
-    'ooo.........oooooo....',
-    '.ooo........ooooooo...',
-    '..oo.....wwwoooo.ooo..',
-    '..oddddddwwwwooooooww.',
-    '..ooooooowwwwwwwww....',
-    '..oooooooowwwww.......',
-    '...ooooooowwww........'
+    '..ll.................',
+    '.llll................',
+    '.llll................',
+    '..ll..........dlld...',
+    '...l.........dllllo..',
+    '...oooooo...dlooooo..',
+    '..oolooolo.ddloo.oon.',
+    '..ooloooodddooooll...',
+    '..oloooooloooool.....',
+    '...ooooooooooo.......'
   ];
   var SNIFF2 = SNIFF.slice();        // 코끝 킁킁
-  SNIFF2[7] = '..oddddddwwwwoooooow..';
+  SNIFF2[6] = '..oolooolo.ddloo.on..';
   var PANT = BODY.slice();           // 혀 내밀고 헥헥
-  PANT[6] = '..oo.....wwwoooowwp...';
+  PANT[4] = '...l......dddooooolp.';
   var PANT2 = BODY_WAG.slice();
-  PANT2[6] = 'oooo.....wwwoooowwp...';
+  PANT2[4] = '.lll......dddooooolp.';
   var LEGS = {
-    stride: ['...oo......ww.........', '..oo........ww........', '..ww.........ww.......'],
-    pass:   ['....oo....ww..........', '....oo....ww..........', '....ww....ww..........'],
-    stand:  ['...oo.oo..ww.ww.......', '...oo.oo..ww.ww.......', '...ww.ww..ww.ww.......'],
-    tuck:   ['..oo.......ww.........', '.ww.........ww........', '......................']
+    stride: ['....oo.......oo......', '....oo........oo.....', '...oo.........oo.....', '...dd..........dd....'],
+    pass:   ['.....oo.....oo.......', '.....oo.....oo.......', '.....oo.....oo.......', '.....dd.....dd.......'],
+    stand:  ['...oo.oo...oo.oo.....', '...oo.oo...oo.oo.....', '...oo.oo...oo.oo.....', '...dd.dd...dd.dd.....'],
+    tuck:   ['...oo........oo......', '..oo..........oo.....', '..dd...........dd....', '.....................']
   };
   var HEART = ['hh.hh', 'hhhhh', '.hhh.', '..h..'];
-  var DOG_W = 22, DOG_H = 14;
+  var DOG_W = 21, DOG_H = 14;
   var GROUND = 29;                   // 잔디 줄 (격자 행)
   var DOG_TOP = GROUND - DOG_H;      // 발이 잔디 바로 위에 닿는 위치
 
@@ -143,7 +143,7 @@
     else if (k === 15) groundMap[(GROUND - 1) * GRID_X + gc] = mix(UNLIT_RGB, [255, 120, 170], 0.55);
   }
 
-  // ── 몽구 상태 — walk(걷기) · sniff · pant · jump · away(화면 밖에서 잠깐 쉬었다 방향 바꿔 돌아옴) ──
+  // ── 호두 상태 — walk(걷기) · sniff · pant · jump · away(화면 밖에서 잠깐 쉬었다 방향 바꿔 돌아옴) ──
   var WALK_MS = 130, JUMP_STEP_MS = 70;
   var dog = { x: -DOG_W, dir: 1, state: 'walk', since: 0, until: 0, acc: 0, step: 0, nextEvent: 2500 };
   function setState(s, t, dur) { dog.state = s; dog.since = t; dog.until = t + dur; dog.acc = 0; }
@@ -277,7 +277,7 @@
     }
   }
 
-  // ── 애니메이션 — 25fps. 화면 밖이거나 동작 줄이기 설정이면 멈춤 (멈춤 화면: 가운데 선 몽구 + 켜진 네온) ──
+  // ── 애니메이션 — 25fps. 화면 밖이거나 동작 줄이기 설정이면 멈춤 (멈춤 화면: 가운데 선 호두 + 켜진 네온) ──
   var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (still) { dog.x = Math.floor((COLS - DOG_W) / 2); dog.state = 'sniff'; dog.since = 0; dog.until = Infinity; }
   var visible = true, lastDraw = 0, sparkDebt = 0;
