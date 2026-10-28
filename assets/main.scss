@@ -5573,7 +5573,7 @@ body.is-list .main-content { max-width: 1180px; }
 
 // ═══════════════════════════════════════
 // 페이지 전환 애니메이션 (cross-document View Transitions) — 같은 사이트 안에서 페이지를 옮길 때.
-// 본문은 4단계로 끊기는 도트풍 디졸브, 클릭한 글 제목은 다음 페이지 제목 자리로 이어진다(_includes/page-transition.html).
+// 본문은 짧은 크로스페이드, 클릭한 글 제목은 다음 페이지 제목 자리로 이어진다(_includes/page-transition.html).
 // 상단바·하단 상태바·사이드바는 따로 떼어 내 제자리에 머문다. 미지원 브라우저는 평소처럼 바로 이동
 // ═══════════════════════════════════════
 @view-transition { navigation: auto; }
@@ -5582,19 +5582,24 @@ body.is-list .main-content { max-width: 1180px; }
 .site-footer { view-transition-name: site-footer; }
 .sidebar-left { view-transition-name: sidebar; }
 
+// 본문 — 투명도만 바꾸는 0.15초 크로스페이드 (끊는 steps() 는 프레임이 떨어져 보여서 쓰지 않는다)
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.24s;
-  animation-timing-function: steps(4, end);
+  animation-duration: 0.15s;
+  animation-timing-function: ease-out;
 }
 
+// 글 제목 — 자리와 크기만 0.22초에 옮기고, 글자 그림은 늘리지 않고 원래 크기 그대로 교차한다
+// (카드의 작은 제목을 큰 제목 크기로 잡아 늘리면 글자가 찌그러져 보인다)
 ::view-transition-group(post-title) {
-  animation-duration: 0.34s;
+  animation-duration: 0.22s;
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 ::view-transition-old(post-title),
 ::view-transition-new(post-title) {
-  animation-duration: 0.2s;
+  width: auto;
+  height: auto;
+  animation-duration: 0.15s;
 }
 
 // 상단바·상태바·사이드바는 두 페이지에서 거의 같으므로 교차 페이드 없이 새 화면으로 바로 바꾼다
