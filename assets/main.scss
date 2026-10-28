@@ -99,6 +99,9 @@
   --btn-press: #A8A8A8;
   --input-bg: #FFFFFF;
   --input-fg: #16171A;
+  --hp-high: #2E9E4F;   // 읽기 진행률 HP 바 — 70% 이상 / 30~70% / 30% 미만
+  --hp-mid: #C98F0C;
+  --hp-low: #D4402F;
   color-scheme: light;
 }
 
@@ -145,6 +148,9 @@
   --btn-press: #a8a8a8;
   --input-bg: #0b0c0e;
   --input-fg: #E4E4EA;
+  --hp-high: #3CDC68;
+  --hp-mid: #F2C230;
+  --hp-low: #FF4F42;
   color-scheme: dark;
 }
 
@@ -5047,23 +5053,30 @@ body.is-list .main-content { max-width: 1180px; }
 }
 
 // ── 글 상세 ──
+// 읽기 진행률 — 게임 도트 HP 바. 6px 점 + 2px 틈 (toc.js 가 채움 폭을 8px 단위로 맞춘다)
 .read-progress {
   position: fixed;
   top: 28px;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 5px;
   z-index: 250;
-  background: tone(0.12);
+  background: tone(0.14);
   pointer-events: none;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
+  mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
 }
 
 .read-progress-fill {
   display: block;
   width: 0;
   height: 100%;
-  background: var(--accent-fill);
+  background: var(--hp-color, var(--hp-low));
 }
+
+[data-hp="low"] { --hp-color: var(--hp-low); }
+[data-hp="mid"] { --hp-color: var(--hp-mid); }
+[data-hp="high"] { --hp-color: var(--hp-high); }
 
 .post-breadcrumb {
   display: flex;
@@ -5354,19 +5367,39 @@ body.is-list .main-content { max-width: 1180px; }
   color: $text-muted;
 }
 
+.toc-progress-label {
+  color: var(--hp-color, var(--hp-low));
+  letter-spacing: 1px;
+}
+
 .toc-progress-bar {
   flex: 1 1 auto;
-  height: 10px;
-  padding: 1px;
+  height: 12px;
+  padding: 2px;
   border: 1px solid var(--chip);
   box-sizing: border-box;
+}
+
+// 20칸 도트 — 빈 칸은 옅게, 찬 칸은 HP 색 (toc.js 가 폭을 5% 단위로 맞춘다)
+.toc-progress-cells {
+  display: block;
+  height: 100%;
+  background: tone(0.12);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 calc(5% - 2px), transparent calc(5% - 2px) 5%);
+  mask: repeating-linear-gradient(90deg, #000 0 calc(5% - 2px), transparent calc(5% - 2px) 5%);
 }
 
 .toc-progress-fill {
   display: block;
   width: 0;
   height: 100%;
-  background: var(--accent-fill);
+  background: var(--hp-color, var(--hp-low));
+}
+
+.toc-progress-text {
+  min-width: 6ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .floating-toc .toc-list {
