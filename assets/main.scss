@@ -1639,7 +1639,8 @@ body.is-home .main-content {
   z-index: 5;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;   // 더블탭 줌 지연 제거 (연타 조작 반응성)
-  &:active { background: rgba(255, 255, 255, 0.18); }
+  &:active,
+  &.is-pad-pressed { background: rgba(255, 255, 255, 0.18); }   // is-pad-pressed: 실제 게임패드로 누르는 중 (dash/input.js)
   &:focus { outline: none; }
 }
 
