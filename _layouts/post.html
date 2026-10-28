@@ -32,7 +32,7 @@ layout: default
         <span>{{ h2_count }} sections</span>
         {%- endif %}
       </p>
-      <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
+      <h1 class="post-title p-name" id="post-title" itemprop="name headline">{{ page.title | escape }}</h1>
       {% if page.title_en %}
         <p class="post-title-en">{{ page.title_en }}</p>
       {% endif %}

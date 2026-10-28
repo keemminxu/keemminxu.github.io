@@ -5536,3 +5536,41 @@ body.is-list .main-content { max-width: 1180px; }
   .post-title { font-size: 1.8rem; }
   .post-content h2 { font-size: 1.35rem; }
 }
+
+// ═══════════════════════════════════════
+// 페이지 전환 애니메이션 (cross-document View Transitions) — 같은 사이트 안에서 페이지를 옮길 때.
+// 본문은 4단계로 끊기는 도트풍 디졸브, 클릭한 글 제목은 다음 페이지 제목 자리로 이어진다(_includes/page-transition.html).
+// 상단바·하단 상태바·사이드바는 따로 떼어 내 제자리에 머문다. 미지원 브라우저는 평소처럼 바로 이동
+// ═══════════════════════════════════════
+@view-transition { navigation: auto; }
+
+.top-bar { view-transition-name: top-bar; }
+.site-footer { view-transition-name: site-footer; }
+.sidebar-left { view-transition-name: sidebar; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.24s;
+  animation-timing-function: steps(4, end);
+}
+
+::view-transition-group(post-title) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-old(post-title),
+::view-transition-new(post-title) {
+  animation-duration: 0.2s;
+}
+
+// 상단바·상태바·사이드바는 두 페이지에서 거의 같으므로 교차 페이드 없이 새 화면으로 바로 바꾼다
+::view-transition-old(top-bar),
+::view-transition-old(site-footer),
+::view-transition-old(sidebar) { display: none; }
+::view-transition-new(top-bar),
+::view-transition-new(site-footer),
+::view-transition-new(sidebar) { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
