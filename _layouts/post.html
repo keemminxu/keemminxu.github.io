@@ -4,7 +4,7 @@ layout: default
 {%- assign post_cat = page.categories | first -%}
 {%- assign post_cat_label = post_cat | replace: 'unrealengine', 'unreal' -%}
 {%- assign h2_count = content | split: '<h2' | size | minus: 1 -%}
-<div class="read-progress" aria-hidden="true"><span class="read-progress-fill" id="read-progress-fill"></span></div>
+<div class="read-progress" id="read-progress" data-hp="low" aria-hidden="true"><span class="read-progress-fill" id="read-progress-fill"></span></div>
 
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
   <nav class="post-breadcrumb" aria-label="경로">
@@ -32,7 +32,7 @@ layout: default
         <span>{{ h2_count }} sections</span>
         {%- endif %}
       </p>
-      <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
+      <h1 class="post-title p-name" id="post-title" itemprop="name headline">{{ page.title | escape }}</h1>
       {% if page.title_en %}
         <p class="post-title-en">{{ page.title_en }}</p>
       {% endif %}
@@ -54,9 +54,10 @@ layout: default
       <div class="floating-toc-titlebar">
         <span class="floating-toc-titlebar-text">CONTENTS</span>
       </div>
-      <div class="toc-progress" aria-hidden="true">
-        <span class="toc-progress-bar"><span class="toc-progress-fill" id="toc-progress-fill"></span></span>
-        <span class="toc-progress-text" id="toc-progress-text">0%</span>
+      <div class="toc-progress" id="toc-progress" data-hp="low" aria-hidden="true">
+        <span class="toc-progress-label">HP</span>
+        <span class="toc-progress-bar"><span class="toc-progress-cells"><span class="toc-progress-fill" id="toc-progress-fill"></span></span></span>
+        <span class="toc-progress-text" id="toc-progress-text">0/100</span>
       </div>
       <ul id="toc-list" class="toc-list"></ul>
       <div class="toc-actions">

@@ -1,4 +1,4 @@
-// input.js — 기존 게임패드 UI 이벤트·키보드·터치를 게임 intent로 변환하는 어댑터
+// input.js — 기존 게임패드 UI 이벤트·키보드·터치·실제 게임패드를 게임 intent로 변환하는 어댑터
 // intents: jumpStart / jumpEnd / duck(bool) / bark / mute / pause / start
 // 규칙: attract·gameover에서는 jumpStart 계열 입력이 start로 쓰임 (main이 모드에 따라 해석)
 
@@ -113,15 +113,56 @@ export function createInput(handlers) {
     jumpUp('stick'); duckSet('stick', false);
   }
 
+  // --- 실제 게임패드 (Gamepad API 표준 배치) — A·↑·왼스틱↑ = 점프, B·↓·왼스틱↓ = 숙이기, X = 짖기, Y = 음소거, Start = 일시정지.
+  //     브라우저는 패드 버튼을 한 번 누른 뒤에야 패드를 알려 준다. 누르는 동안 화면 속 패드의 같은 버튼도 눌린 것처럼 표시 ---
+  const PAD_JUMP = [0, 12], PAD_DUCK = [1, 13], PAD_BARK = 2, PAD_MUTE = 3, PAD_PAUSE = 9;
+  const PAD_HITS = { 0: '.hit-a', 1: '.hit-b', 2: '.hit-x', 3: '.hit-y', 12: '.hit-up', 13: '.hit-down' };
+  const padPrev = new Map();   // 패드 index → 이전 프레임의 버튼 눌림 배열
+  let padRaf = 0;
+  function showPadPress(i, on) {
+    const el = document.querySelector(PAD_HITS[i]);
+    if (el) el.classList.toggle('is-pad-pressed', on);
+  }
+  function pollPads() {
+    padRaf = 0;
+    const pads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean);
+    for (const pad of pads) {
+      const id = 'pad' + pad.index;
+      const prev = padPrev.get(pad.index) || [];
+      const now = pad.buttons.map((b) => b.pressed);
+      const stickY = pad.axes[1] || 0;
+      if (PAD_JUMP.some((i) => now[i]) || stickY < -0.5) jumpDown(id); else jumpUp(id);
+      duckSet(id, PAD_DUCK.some((i) => now[i]) || stickY > 0.5);
+      if (now[PAD_BARK] && !prev[PAD_BARK]) h.bark();
+      if (now[PAD_MUTE] && !prev[PAD_MUTE]) h.mute();
+      if (now[PAD_PAUSE] && !prev[PAD_PAUSE]) h.pause();
+      for (const i in PAD_HITS) if (!!now[i] !== !!prev[i]) showPadPress(i, !!now[i]);
+      padPrev.set(pad.index, now);
+    }
+    if (pads.length) padRaf = requestAnimationFrame(pollPads);
+  }
+  function startPads() { if (!padRaf) padRaf = requestAnimationFrame(pollPads); }
+  function onPadDisconnected(e) {
+    const id = 'pad' + e.gamepad.index;
+    jumpUp(id); duckSet(id, false);
+    const prev = padPrev.get(e.gamepad.index) || [];
+    for (const i in PAD_HITS) if (prev[i]) showPadPress(i, false);
+    padPrev.delete(e.gamepad.index);
+  }
+
   const listeners = [
     [window, 'keydown', onKeyDown], [window, 'keyup', onKeyUp], [window, 'blur', onBlur],
     [document, 'game-dpad', onDpad], [document, 'game-button', onButton], [document, 'game-button-release', onButtonRelease],
+    [window, 'gamepadconnected', startPads], [window, 'gamepaddisconnected', onPadDisconnected],
   ];
   if (screen) listeners.push([screen, 'pointerdown', onPointerDown], [window, 'pointerup', onPointerEnd], [window, 'pointercancel', onPointerEnd]);
   if (stickEl) listeners.push([stickEl, 'pointerdown', stickDown], [window, 'pointermove', stickMove], [window, 'pointerup', stickEnd], [window, 'pointercancel', stickEnd]);
 
   return {
-    attach() { for (const [t, ev, fn] of listeners) t.addEventListener(ev, fn); },
-    detach() { for (const [t, ev, fn] of listeners) t.removeEventListener(ev, fn); },
+    attach() { for (const [t, ev, fn] of listeners) t.addEventListener(ev, fn); startPads(); },
+    detach() {
+      for (const [t, ev, fn] of listeners) t.removeEventListener(ev, fn);
+      cancelAnimationFrame(padRaf); padRaf = 0;
+    },
   };
 }

@@ -99,6 +99,9 @@
   --btn-press: #A8A8A8;
   --input-bg: #FFFFFF;
   --input-fg: #16171A;
+  --hp-high: #2E9E4F;   // 읽기 진행률 HP 바 — 70% 이상 / 30~70% / 30% 미만
+  --hp-mid: #C98F0C;
+  --hp-low: #D4402F;
   color-scheme: light;
 }
 
@@ -145,6 +148,9 @@
   --btn-press: #a8a8a8;
   --input-bg: #0b0c0e;
   --input-fg: #E4E4EA;
+  --hp-high: #3CDC68;
+  --hp-mid: #F2C230;
+  --hp-low: #FF4F42;
   color-scheme: dark;
 }
 
@@ -1633,7 +1639,8 @@ body.is-home .main-content {
   z-index: 5;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;   // 더블탭 줌 지연 제거 (연타 조작 반응성)
-  &:active { background: rgba(255, 255, 255, 0.18); }
+  &:active,
+  &.is-pad-pressed { background: rgba(255, 255, 255, 0.18); }   // is-pad-pressed: 실제 게임패드로 누르는 중 (dash/input.js)
   &:focus { outline: none; }
 }
 
@@ -5047,23 +5054,30 @@ body.is-list .main-content { max-width: 1180px; }
 }
 
 // ── 글 상세 ──
+// 읽기 진행률 — 게임 도트 HP 바. 6px 점 + 2px 틈 (toc.js 가 채움 폭을 8px 단위로 맞춘다)
 .read-progress {
   position: fixed;
   top: 28px;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 5px;
   z-index: 250;
-  background: tone(0.12);
+  background: tone(0.14);
   pointer-events: none;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
+  mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
 }
 
 .read-progress-fill {
   display: block;
   width: 0;
   height: 100%;
-  background: var(--accent-fill);
+  background: var(--hp-color, var(--hp-low));
 }
+
+[data-hp="low"] { --hp-color: var(--hp-low); }
+[data-hp="mid"] { --hp-color: var(--hp-mid); }
+[data-hp="high"] { --hp-color: var(--hp-high); }
 
 .post-breadcrumb {
   display: flex;
@@ -5354,19 +5368,39 @@ body.is-list .main-content { max-width: 1180px; }
   color: $text-muted;
 }
 
+.toc-progress-label {
+  color: var(--hp-color, var(--hp-low));
+  letter-spacing: 1px;
+}
+
 .toc-progress-bar {
   flex: 1 1 auto;
-  height: 10px;
-  padding: 1px;
+  height: 12px;
+  padding: 2px;
   border: 1px solid var(--chip);
   box-sizing: border-box;
+}
+
+// 20칸 도트 — 빈 칸은 옅게, 찬 칸은 HP 색 (toc.js 가 폭을 5% 단위로 맞춘다)
+.toc-progress-cells {
+  display: block;
+  height: 100%;
+  background: tone(0.12);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 calc(5% - 2px), transparent calc(5% - 2px) 5%);
+  mask: repeating-linear-gradient(90deg, #000 0 calc(5% - 2px), transparent calc(5% - 2px) 5%);
 }
 
 .toc-progress-fill {
   display: block;
   width: 0;
   height: 100%;
-  background: var(--accent-fill);
+  background: var(--hp-color, var(--hp-low));
+}
+
+.toc-progress-text {
+  min-width: 6ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .floating-toc .toc-list {
@@ -5535,4 +5569,42 @@ body.is-list .main-content { max-width: 1180px; }
   // 글 상세
   .post-title { font-size: 1.8rem; }
   .post-content h2 { font-size: 1.35rem; }
+}
+
+// ═══════════════════════════════════════
+// 페이지 전환 애니메이션 (cross-document View Transitions) — 같은 사이트 안에서 페이지를 옮길 때.
+// 본문은 4단계로 끊기는 도트풍 디졸브, 클릭한 글 제목은 다음 페이지 제목 자리로 이어진다(_includes/page-transition.html).
+// 상단바·하단 상태바·사이드바는 따로 떼어 내 제자리에 머문다. 미지원 브라우저는 평소처럼 바로 이동
+// ═══════════════════════════════════════
+@view-transition { navigation: auto; }
+
+.top-bar { view-transition-name: top-bar; }
+.site-footer { view-transition-name: site-footer; }
+.sidebar-left { view-transition-name: sidebar; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.24s;
+  animation-timing-function: steps(4, end);
+}
+
+::view-transition-group(post-title) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-old(post-title),
+::view-transition-new(post-title) {
+  animation-duration: 0.2s;
+}
+
+// 상단바·상태바·사이드바는 두 페이지에서 거의 같으므로 교차 페이드 없이 새 화면으로 바로 바꾼다
+::view-transition-old(top-bar),
+::view-transition-old(site-footer),
+::view-transition-old(sidebar) { display: none; }
+::view-transition-new(top-bar),
+::view-transition-new(site-footer),
+::view-transition-new(sidebar) { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
 }

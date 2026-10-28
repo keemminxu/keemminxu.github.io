@@ -1,4 +1,4 @@
-// 글 페이지 도구 — 플로팅 TOC(h2 중심) · 읽기 진행률(상단 바 + TOC) · 링크 복사/맨 위로 · 코드 블록 copy 버튼
+// 글 페이지 도구 — 플로팅 TOC(h2 중심) · 읽기 진행률 HP 바(상단 + TOC) · 링크 복사/맨 위로 · 코드 블록 copy 버튼
 document.addEventListener('DOMContentLoaded', function () {
   var content = document.querySelector('.post-content');
   if (!content) return;
@@ -32,8 +32,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ── 읽기 진행률 + 현재 섹션 하이라이트 ──
+  // ── 읽기 진행률(게임 도트 HP 바) + 현재 섹션 하이라이트 ──
+  //    상단 바는 8px 칸(6px 점 + 2px 틈), TOC 바는 20칸(5%) — 칸 단위로만 차오르고 30%·70% 에서 빨강→노랑→초록
+  var BAR_CELL = 8;
+  var bar = document.getElementById('read-progress');
   var barFill = document.getElementById('read-progress-fill');
+  var toc = document.getElementById('toc-progress');
   var tocFill = document.getElementById('toc-progress-fill');
   var tocText = document.getElementById('toc-progress-text');
   var ticking = false;
@@ -44,9 +48,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var range = rect.height - window.innerHeight;
     var pct = range > 0 ? (-rect.top / range) * 100 : (rect.top < window.innerHeight ? 100 : 0);
     pct = Math.round(Math.min(100, Math.max(0, pct)));
-    if (barFill) barFill.style.width = pct + '%';
-    if (tocFill) tocFill.style.width = pct + '%';
-    if (tocText) tocText.textContent = pct + '%';
+    var hp = pct < 30 ? 'low' : pct < 70 ? 'mid' : 'high';
+    if (bar && barFill) {
+      barFill.style.width = Math.floor(bar.clientWidth * pct / 100 / BAR_CELL) * BAR_CELL + 'px';
+      bar.dataset.hp = hp;
+    }
+    if (toc) toc.dataset.hp = hp;
+    if (tocFill) tocFill.style.width = Math.floor(pct / 5) * 5 + '%';
+    if (tocText) tocText.textContent = pct + '/100';
 
     var current = -1;
     headings.forEach(function (heading, i) {

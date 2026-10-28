@@ -17,6 +17,11 @@
       root.setAttribute('data-theme', theme);
     })();
   </script>
+  {%- include page-transition.html %}
+  {%- if page.layout == 'post' %}
+  <!-- 글 제목이 파싱되기 전에 첫 화면을 그리지 않게 — 전환 애니메이션이 제목을 찾을 수 있도록 -->
+  <link rel="expect" href="#post-title" blocking="render">
+  {%- endif %}
   <meta name="google-site-verification" content="MU5Kvlk3YqYMb6Jqinv-Ex2oF1FhnP9Btj2LcG4Y_tE" />
   <meta name="google-adsense-account" content="ca-pub-3365788439910856">
   <link rel="icon" type="image/x-icon" href="{{ '/favicon.ico' | relative_url }}">
@@ -24,6 +29,7 @@
   <link rel="preload" href="{{ '/assets/fonts/ChaiHwaljjak/ChaiHwaljjak-Bold.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{{ '/assets/fonts/BlogPixelSans/BlogPixelSans.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
   {%- seo -%}
+
 
   <!-- 태그 목록·daily처럼 본문이 얇은 페이지는 검색 색인에서 제외 (링크는 따라가게 follow) -->
   {% if page.noindex %}
@@ -62,8 +68,37 @@
   <!-- Google Material Symbols -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-  <!-- Umami Analytics -->
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="69da4afd-2258-4121-84e7-b12c4e37ccac"></script>
+  <!-- Umami Analytics — 미리 렌더링된 페이지는 실제로 열릴 때 불러온다 (마우스만 올린 페이지가 조회수에 잡히지 않게) -->
+  <script>
+    (function () {
+      function load() {
+        var s = document.createElement('script');
+        s.defer = true;
+        s.src = 'https://cloud.umami.is/script.js';
+        s.setAttribute('data-website-id', '69da4afd-2258-4121-84e7-b12c4e37ccac');
+        document.head.appendChild(s);
+      }
+      if (document.prerendering) document.addEventListener('prerenderingchange', load, { once: true });
+      else load();
+    })();
+  </script>
+
+  <!-- 미리 렌더링 (Speculation Rules) — 사이트 안 링크에 마우스를 올리거나 누르기 시작하면 다음 페이지를 미리 그려 둔다.
+       파일·피드·새 창 링크는 제외. AdSense 는 스스로 미리 렌더링 중에는 광고를 요청하지 않는다 -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": {
+        "and": [
+          { "href_matches": "/*" },
+          { "not": { "href_matches": ["/assets/*", "/feed.xml", "/*.xml", "/*.json", "/*.txt"] } },
+          { "not": { "selector_matches": "[target=_blank], [download], [rel~=nofollow]" } }
+        ]
+      },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3365788439910856"

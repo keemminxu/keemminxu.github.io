@@ -1,0 +1,68 @@
+{%- comment -%}
+  페이지 전환 애니메이션 (cross-document View Transitions) — 전환 효과는 main.scss 의 @view-transition.
+  클릭한 글 제목(카드·이전/다음·관련 글·DIR 목록)이 다음 페이지의 글 제목 자리로 이어지고, 돌아갈 때는 반대로 이어진다.
+  pagereveal 은 첫 렌더 전에 오므로 head 의 동기 스크립트로 둔다. 미지원 브라우저(Firefox 등)는 이벤트가 없어 평소처럼 이동한다.
+{%- endcomment -%}
+<script>
+  (function () {
+    if (!('onpagereveal' in window)) return;
+    var TITLE = '.post-card-title, .home-featured-title, .post-nav-title, .related-name, .dir-name';
+    var named = [];
+    var clicked = null;
+
+    function isPost(path) { return /^\/(en\/)?\d{4}\/\d{2}\/\d{2}\/[^/]+\/$/.test(path); }
+    function clear() {
+      named.forEach(function (el) { el.style.viewTransitionName = ''; });
+      named = [];
+    }
+    function name(el) {
+      if (!el || !el.getClientRects().length) return;
+      el.style.viewTransitionName = 'post-title';
+      named.push(el);
+    }
+    // 이 페이지에서 path 로 가는 링크 안의 제목 — 화면에 보이는 첫 번째 것
+    function titleFor(path) {
+      var links = document.querySelectorAll('a[href]');
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].origin !== location.origin || links[i].pathname !== path) continue;
+        var t = links[i].querySelector(TITLE);
+        if (t && t.getClientRects().length) return t;
+      }
+      return null;
+    }
+
+    document.addEventListener('click', function (e) {
+      clicked = e.target.closest ? e.target.closest('a[href]') : null;
+    }, true);
+
+    // 떠나는 페이지 — 가는 글의 제목(없으면 지금 글의 제목)에 이름을 붙인다
+    window.addEventListener('pageswap', function (e) {
+      if (!e.viewTransition || !e.activation || !e.activation.entry) return;
+      clear();
+      var to = new URL(e.activation.entry.url).pathname;
+      var t = null;
+      if (isPost(to)) {
+        if (clicked && clicked.pathname === to) t = clicked.querySelector(TITLE);
+        if (!t) t = titleFor(to);
+      }
+      if (!t && isPost(location.pathname)) t = document.querySelector('.post-title');
+      name(t);
+    });
+
+    // 들어오는 페이지 — 글이면 글 제목, 목록이면 방금 보던 글의 카드 제목
+    window.addEventListener('pagereveal', function (e) {
+      if (!e.viewTransition) return;
+      clear();
+      if (isPost(location.pathname)) {
+        name(document.querySelector('.post-title'));
+      } else if (window.navigation && navigation.activation && navigation.activation.from) {
+        var from = new URL(navigation.activation.from.url).pathname;
+        if (isPost(from)) name(titleFor(from));
+      }
+      e.viewTransition.finished.finally(clear);
+    });
+
+    // 뒤로 가기 캐시(bfcache)에서 돌아오면 떠날 때 붙인 이름을 지운다 — 이름이 겹치면 전환이 통째로 건너뛰어진다
+    window.addEventListener('pageshow', function (e) { if (e.persisted) clear(); });
+  })();
+</script>
