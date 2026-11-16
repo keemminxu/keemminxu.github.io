@@ -13,8 +13,15 @@ const CAMERA_TARGET = new THREE.Vector3(0, 1.05, 0);
 const PRIZE_SIZE = 0.95;
 const TURN = Math.PI * 2;
 const TICK = Math.PI / 4;
-// Meshy 모델 방향 보정(라디안). GLB를 받은 뒤 화면을 보며 맞춘다.
-export const PRIZE_TUNE = { towel: { rotX: 0, rotY: 0 }, cup: { rotX: 0, rotY: 0 }, bag: { rotX: 0, rotY: 0 } };
+// Meshy 모델 보정: 방향(라디안), 불투명도(투명 컵), 밝기(사진 텍스처가 실내광에 회색으로 찍힌 것을 끌어올림)
+export const PRIZE_TUNE = {
+  towel: { rotX: 0, rotY: 0, opacity: 1, lift: 0.25 },
+  cup: { rotX: 0, rotY: 0, opacity: 0.85, lift: 0.25 },
+  bag: { rotX: 0, rotY: 0, opacity: 1, lift: 0.25 },
+};
+const DEFAULT_TUNE = { rotX: 0, rotY: 0, opacity: 1, lift: 0 };
+// 경품은 정면을 보여 주며 좌우로 흔든다(얇은 수건·장바구니는 옆에서 보면 선이 된다)
+const SWAY = { angle: 0.55, speed: 1.3 };
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeInQuad = (x) => x * x;
@@ -33,6 +40,16 @@ function normalizePrize(obj, tune) {
   const s = PRIZE_SIZE / Math.max(size.x, size.y, size.z, 1e-6);
   pivot.scale.setScalar(s);
   pivot.position.copy(center).multiplyScalar(-s);
+  obj.traverse((m) => {
+    if (!m.isMesh) return;
+    const mat = m.material;
+    if (tune.opacity < 1) { mat.transparent = true; mat.opacity = tune.opacity; }
+    if (tune.lift > 0 && mat.map && 'emissive' in mat) {
+      mat.emissive.setRGB(1, 1, 1);
+      mat.emissiveMap = mat.map;
+      mat.emissiveIntensity = tune.lift;
+    }
+  });
   const holder = new THREE.Group();
   holder.add(pivot);
   return holder;
@@ -63,7 +80,7 @@ async function loadPrizes(scene, prizes) {
     let holder;
     try {
       const gltf = await loader.loadAsync(url);
-      holder = normalizePrize(gltf.scene, PRIZE_TUNE[key] || { rotX: 0, rotY: 0 });
+      holder = normalizePrize(gltf.scene, { ...DEFAULT_TUNE, ...PRIZE_TUNE[key] });
     } catch (e) {
       console.warn(`[pick] ${key} GLB를 불러오지 못해 이름 카드로 대체`, e);
       holder = prizeCard(label);
@@ -88,7 +105,11 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
   key.position.set(3, 6, 5);
   const rim = new THREE.DirectionalLight(0xffe14d, 0.8);
   rim.position.set(-4, 3, -3);
-  scene.add(key, rim);
+  // 쇼케이스 정면 보조광: 어두워진 배경 앞에서 경품 앞면을 밝힌다
+  const fill = new THREE.DirectionalLight(0xffffff, 1.4);
+  fill.position.set(0, 2.4, 9);
+  fill.target.position.copy(SHOWCASE);
+  scene.add(key, rim, fill, fill.target);
 
   await document.fonts.load('700 80px ChaiHwaljjak').catch(() => {});
   const machine = buildMachine(scene, { title });
@@ -135,7 +156,7 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
   // ---- 손잡이 ----
   let mode = 'idle'; // idle | ready | busy
   let turn = 0, nextTick = TICK, auto = false, dragging = false, lastAngle = 0, shake = 0;
-  let revealed = null, idleStir = 0, time = 0;
+  let revealed = null, revealT = 0, idleStir = 0, time = 0;
   const handleWorld = new THREE.Vector3();
 
   function angleAt(e) {
@@ -255,6 +276,7 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     prize.scale.setScalar(0.001);
     prize.visible = true;
     revealed = prize;
+    revealT = 0;
     tween(0.6, (t) => prize.scale.setScalar(Math.max(0.001, easeOutBack(t))));
     await tween(0.7, (t) => {
       heroTop.position.set(-1.5 * t, 2.2 * t, 0.5 * t);
@@ -309,7 +331,8 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     machine.group.position.x = (Math.random() - 0.5) * 0.03 * shake;
     machine.group.rotation.z = (Math.random() - 0.5) * 0.01 * shake;
     if (revealed) {
-      revealed.rotation.y += dt * 0.9;
+      revealT += dt;
+      revealed.rotation.y = Math.sin(revealT * SWAY.speed) * SWAY.angle;
       revealed.position.y = SHOWCASE.y + Math.sin(time * 2) * 0.03;
     }
     renderer.render(scene, camera);
