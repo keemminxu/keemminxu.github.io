@@ -1,8 +1,12 @@
-// 돔 속 캡슐 — physics.js 결과를 InstancedMesh 2개(색 반구 + 흰 반구)로 그린다
+// 돔 속 캡슐 — physics.js 결과를 툰 인스턴스로 그린다(색 반구 + 크림 반구 + 잉크 외곽선 + 하이라이트)
 import * as THREE from 'three';
 import { createPhysics, capsuleRadius, STEP, MAX_CAPSULES } from './physics.js';
+import { PAL, INK, toonMat } from './toon.js';
 
-export const CAPSULE_COLORS = [0xf4a6c0, 0x2f8f4e, 0xf39a52, 0xffe14d];
+export const CAPSULE_COLORS = [PAL.pink, PAL.green500, PAL.orange, PAL.yellow];
+const OUTLINE = 1.14; // 반지름 대비 외곽선 구 크기
+// 하이라이트는 캡슐 회전과 무관하게 항상 빛 쪽(왼쪽 위 앞)에 붙는다
+const SHINE_DIR = new THREE.Vector3(-0.35, 0.45, 0.82).normalize();
 
 // 반지름 1 기준 반구 두 개. 인스턴스·히어로 캡슐이 함께 쓴다.
 export function capsuleGeometries() {
@@ -15,9 +19,15 @@ export function capsuleGeometries() {
 export function createCapsules(scene, { center, radius, rand = Math.random }) {
   const ph = createPhysics({ center: [center.x, center.y, center.z], radius, rand });
   const geo = capsuleGeometries();
-  const top = new THREE.InstancedMesh(geo.top, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 }), MAX_CAPSULES);
-  const bottom = new THREE.InstancedMesh(geo.bottom, new THREE.MeshStandardMaterial({ color: 0xf6f1e3, roughness: 0.4 }), MAX_CAPSULES);
-  for (const m of [top, bottom]) {
+  const top = new THREE.InstancedMesh(geo.top, toonMat(0xffffff), MAX_CAPSULES);
+  const bottom = new THREE.InstancedMesh(geo.bottom, toonMat(PAL.cream), MAX_CAPSULES);
+  const outline = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(OUTLINE, 16, 10),
+    new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide }),
+    MAX_CAPSULES,
+  );
+  const shine = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), MAX_CAPSULES);
+  for (const m of [top, bottom, outline, shine]) {
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.frustumCulled = false;
     m.count = 0;
@@ -25,12 +35,15 @@ export function createCapsules(scene, { center, radius, rand = Math.random }) {
   }
   const pickColor = () => Math.floor(rand() * CAPSULE_COLORS.length);
   const col = new THREE.Color(), mat = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+  const sp = new THREE.Vector3(), sq = new THREE.Quaternion(), ss = new THREE.Vector3();
   let acc = 0, filled = false;
 
   function sync() {
     const n = ph.bodies.length;
-    top.count = bottom.count = n;
-    s.setScalar(ph.radius);
+    top.count = bottom.count = outline.count = shine.count = n;
+    const r = ph.radius;
+    s.setScalar(r);
+    ss.set(r * 0.28, r * 0.18, r * 0.06);
     for (let i = 0; i < n; i++) {
       const b = ph.bodies[i];
       p.set(b.x, b.y, b.z);
@@ -38,10 +51,13 @@ export function createCapsules(scene, { center, radius, rand = Math.random }) {
       mat.compose(p, q, s);
       top.setMatrixAt(i, mat);
       bottom.setMatrixAt(i, mat);
+      outline.setMatrixAt(i, mat);
       top.setColorAt(i, col.setHex(CAPSULE_COLORS[b.color]));
+      sp.copy(SHINE_DIR).multiplyScalar(r).add(p); // 표면 위에 납작하게(sq는 항등 회전)
+      mat.compose(sp, sq, ss);
+      shine.setMatrixAt(i, mat);
     }
-    top.instanceMatrix.needsUpdate = true;
-    bottom.instanceMatrix.needsUpdate = true;
+    for (const m of [top, bottom, outline, shine]) m.instanceMatrix.needsUpdate = true;
     if (top.instanceColor) top.instanceColor.needsUpdate = true;
   }
 

@@ -1,34 +1,57 @@
-// 3D 무대 — 렌더러·카메라, 손잡이 입력, 배출·개봉 연출, 경품 메시
+// 3D 무대 — 렌더러·카메라, 손잡이 입력, 배출·개봉 연출(툰 타격감), 경품 메시
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { buildMachine, DOME, HANDLE_POS, EXIT_POS, TRAY_POS } from './machine.js';
 import { createCapsules, capsuleGeometries, CAPSULE_COLORS } from './capsules.js';
 import { createFx } from './fx.js';
+import { PAL, INK, toonRamp, normalOutline, toonGlass, inkDecal } from './toon.js';
 
 export const SHOWCASE = new THREE.Vector3(0, 1.7, 3.2);
 // 머신(높이 약 3.35)이 화면 위쪽 ~65%에 들어오고 아래쪽은 버튼·결과 카드 자리로 비운다
 const CAMERA_POS = new THREE.Vector3(0, 1.9, 8.3);
 const CAMERA_TARGET = new THREE.Vector3(0, 1.05, 0);
 const PRIZE_SIZE = 0.95;
+const OUTLINE_WORLD = 0.016; // 경품 외곽선 두께(월드 단위)
 const TURN = Math.PI * 2;
 const TICK = Math.PI / 4;
-// Meshy 모델 보정: 방향(라디안), 불투명도(투명 컵), 밝기(사진 텍스처가 실내광에 회색으로 찍힌 것을 끌어올림)
+// Meshy 모델 보정: 방향(라디안), glass=투명 컵(몸통은 툰 유리, 인쇄만 데칼로), bright=사진 텍스처 밝기 배율
 export const PRIZE_TUNE = {
-  towel: { rotX: 0, rotY: 0, opacity: 1, lift: 0.25 },
-  cup: { rotX: 0, rotY: 0, opacity: 0.85, lift: 0.25 },
-  bag: { rotX: 0, rotY: 0, opacity: 1, lift: 0.25 },
+  towel: { rotX: 0, rotY: 0, bright: 2.6 }, // 텍스처 중앙값 sRGB 144 → 흰색 근처로
+  cup: { rotX: 0, rotY: 0, glass: true },
+  bag: { rotX: 0, rotY: 0, bright: 1.7 },
 };
-const DEFAULT_TUNE = { rotX: 0, rotY: 0, opacity: 1, lift: 0 };
 // 경품은 정면을 보여 주며 좌우로 흔든다(얇은 수건·장바구니는 옆에서 보면 선이 된다)
 const SWAY = { angle: 0.55, speed: 1.3 };
+const SHINE_DIR = new THREE.Vector3(-0.35, 0.45, 0.82).normalize();
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeInQuad = (x) => x * x;
 const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const easeOutBack = (x) => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
+const easeOutCubic = (x) => 1 - Math.pow(1 - x, 3);
 
-// 크기·중심을 맞춘 홀더 그룹으로 감싼다(홀더를 돌리고 움직인다)
+// Meshy 재질을 툰으로: 사진 텍스처는 유지하고 음영만 셀로 + 잉크 외곽선. 유리 컵은 툰 유리 + 인쇄 데칼.
+function toonify(root, tune) {
+  const meshes = [];
+  root.traverse((m) => { if (m.isMesh) meshes.push(m); });
+  const ws = new THREE.Vector3();
+  for (const m of meshes) {
+    const map = m.material.map || null;
+    m.getWorldScale(ws);
+    if (tune.glass) {
+      if (map) m.add(inkDecal(m));
+      m.material = toonGlass({ side: THREE.DoubleSide, alpha: 0.1, edge: [0.6, 0.7] });
+      m.renderOrder = 3;
+    } else {
+      m.material = new THREE.MeshToonMaterial({ map, gradientMap: toonRamp('prize'), side: THREE.DoubleSide });
+      m.material.color.setScalar(tune.bright || 1); // 실내광에 회색으로 찍힌 흰 천을 흰색으로
+      m.add(normalOutline(m.geometry, OUTLINE_WORLD / ws.x));
+    }
+  }
+}
+
+// 크기·중심을 맞춘 홀더 그룹으로 감싼다(홀더를 흔들고 움직인다)
 function normalizePrize(obj, tune) {
   const pivot = new THREE.Group();
   pivot.add(obj);
@@ -40,28 +63,22 @@ function normalizePrize(obj, tune) {
   const s = PRIZE_SIZE / Math.max(size.x, size.y, size.z, 1e-6);
   pivot.scale.setScalar(s);
   pivot.position.copy(center).multiplyScalar(-s);
-  obj.traverse((m) => {
-    if (!m.isMesh) return;
-    const mat = m.material;
-    if (tune.opacity < 1) { mat.transparent = true; mat.opacity = tune.opacity; }
-    if (tune.lift > 0 && mat.map && 'emissive' in mat) {
-      mat.emissive.setRGB(1, 1, 1);
-      mat.emissiveMap = mat.map;
-      mat.emissiveIntensity = tune.lift;
-    }
-  });
+  pivot.updateMatrixWorld(true);
+  toonify(obj, tune);
   const holder = new THREE.Group();
   holder.add(pivot);
   return holder;
 }
 
-// GLB가 없거나 깨졌을 때: 경품 이름 카드
+// GLB가 없거나 깨졌을 때: 경품 이름 스티커 카드
 function prizeCard(label) {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 320;
   const g = c.getContext('2d');
-  g.fillStyle = '#f6f1e3';
-  g.beginPath(); g.roundRect(6, 6, 500, 308, 48); g.fill();
+  g.fillStyle = '#fbf6e8';
+  g.strokeStyle = '#14231a';
+  g.lineWidth = 14;
+  g.beginPath(); g.roundRect(12, 12, 488, 296, 44); g.fill(); g.stroke();
   g.fillStyle = '#1d6b3c';
   g.font = '700 120px ChaiHwaljjak, "Malgun Gothic", sans-serif';
   g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -80,7 +97,7 @@ async function loadPrizes(scene, prizes) {
     let holder;
     try {
       const gltf = await loader.loadAsync(url);
-      holder = normalizePrize(gltf.scene, { ...DEFAULT_TUNE, ...PRIZE_TUNE[key] });
+      holder = normalizePrize(gltf.scene, { rotX: 0, rotY: 0, ...PRIZE_TUNE[key] });
     } catch (e) {
       console.warn(`[pick] ${key} GLB를 불러오지 못해 이름 카드로 대체`, e);
       holder = prizeCard(label);
@@ -92,56 +109,65 @@ async function loadPrizes(scene, prizes) {
   return out;
 }
 
-export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }) {
+export async function createStage({ canvas, sfx, prizes, onTurnComplete, onImpact = () => {} }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); // WebGL 불가 시 여기서 throw
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMapping = THREE.NoToneMapping; // 툰은 팔레트 색을 그대로
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 16 / 9, 0.1, 50);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x1d6b3c, 1.1));
-  const key = new THREE.DirectionalLight(0xffffff, 2.2);
-  key.position.set(3, 6, 5);
-  const rim = new THREE.DirectionalLight(0xffe14d, 0.8);
-  rim.position.set(-4, 3, -3);
-  // 쇼케이스 정면 보조광: 어두워진 배경 앞에서 경품 앞면을 밝힌다
-  const fill = new THREE.DirectionalLight(0xffffff, 1.4);
-  fill.position.set(0, 2.4, 9);
-  fill.target.position.copy(SHOWCASE);
-  scene.add(key, rim, fill, fill.target);
+  scene.add(new THREE.HemisphereLight(0xffffff, PAL.green700, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 2.5); // 왼쪽 위 앞에서(캡슐 하이라이트와 같은 쪽)
+  key.position.set(-3, 5, 6);
+  scene.add(key);
 
   await document.fonts.load('700 80px ChaiHwaljjak').catch(() => {});
-  const machine = buildMachine(scene, { title });
+  const machine = buildMachine(scene);
   const capsules = createCapsules(scene, { center: DOME.center, radius: DOME.radius });
   const fx = createFx(scene);
 
   // 쇼케이스 뒤 배경을 어둡게 하는 판
-  const dim = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshBasicMaterial({ color: 0x06180d, transparent: true, opacity: 0, depthWrite: false }));
+  const dim = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0, depthWrite: false }));
   dim.position.set(0, 1.5, 2.4);
   dim.visible = false;
   scene.add(dim);
 
-  // 배출되는 캡슐(반으로 갈라지는 히어로)
+  // 배출되는 캡슐: heroRoot(위치·크기·찌그러짐) → heroSpin(회전) → 반구 두 개(+잉크 외곽선)
   const capGeo = capsuleGeometries();
-  const heroTopMat = new THREE.MeshStandardMaterial({ color: CAPSULE_COLORS[0], roughness: 0.25, transparent: true });
-  const heroBottomMat = new THREE.MeshStandardMaterial({ color: 0xf6f1e3, roughness: 0.4, transparent: true });
-  const hero = new THREE.Group();
-  const heroTop = new THREE.Mesh(capGeo.top, heroTopMat);
-  const heroBottom = new THREE.Mesh(capGeo.bottom, heroBottomMat);
-  hero.add(heroTop, heroBottom);
-  hero.visible = false;
-  scene.add(hero);
+  const heroTopMat = new THREE.MeshToonMaterial({ color: CAPSULE_COLORS[0], gradientMap: toonRamp(), transparent: true });
+  const heroBottomMat = new THREE.MeshToonMaterial({ color: PAL.cream, gradientMap: toonRamp(), transparent: true });
+  const heroInkMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true });
+  const half = (geo, mat) => {
+    const m = new THREE.Mesh(geo, mat);
+    const ink = new THREE.Mesh(geo, heroInkMat);
+    ink.scale.setScalar(1.13);
+    m.add(ink);
+    return m;
+  };
+  const heroRoot = new THREE.Group();
+  const heroSpin = new THREE.Group();
+  const heroTop = half(capGeo.top, heroTopMat);
+  const heroBottom = half(capGeo.bottom, heroBottomMat);
+  const heroShine = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true }));
+  heroShine.position.copy(SHINE_DIR);
+  heroShine.scale.set(0.28, 0.18, 0.06);
+  heroSpin.add(heroTop, heroBottom);
+  heroRoot.add(heroSpin, heroShine);
+  heroRoot.visible = false;
+  scene.add(heroRoot);
 
   const prizeObjs = await loadPrizes(scene, prizes);
 
+  const camBase = new THREE.Vector3();
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // 16:9보다 좁으면 뒤로 물러나 머신이 잘리지 않게
     const back = Math.max(1, 1.5 / camera.aspect);
-    camera.position.copy(CAMERA_POS).setZ(CAMERA_POS.z * back);
+    camBase.copy(CAMERA_POS).setZ(CAMERA_POS.z * back);
+    camera.position.copy(camBase);
     camera.lookAt(CAMERA_TARGET);
     camera.updateProjectionMatrix();
   }
@@ -155,17 +181,20 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
 
   // ---- 손잡이 ----
   let mode = 'idle'; // idle | ready | busy
-  let turn = 0, nextTick = TICK, auto = false, dragging = false, lastAngle = 0, shake = 0;
+  let turn = 0, nextTick = TICK, auto = false, dragging = false, lastAngle = 0, shake = 0, camShake = 0;
   let revealed = null, revealT = 0, idleStir = 0, time = 0;
   const handleWorld = new THREE.Vector3();
 
+  function toScreen(v3) {
+    const v = v3.clone().project(camera);
+    const rect = canvas.getBoundingClientRect();
+    return { x: rect.left + ((v.x + 1) / 2) * rect.width, y: rect.top + ((1 - v.y) / 2) * rect.height };
+  }
+
   function angleAt(e) {
     machine.handle.getWorldPosition(handleWorld);
-    const v = handleWorld.project(camera);
-    const rect = canvas.getBoundingClientRect();
-    const sx = rect.left + ((v.x + 1) / 2) * rect.width;
-    const sy = rect.top + ((1 - v.y) / 2) * rect.height;
-    return Math.atan2(e.clientY - sy, e.clientX - sx); // 화면 좌표(y 아래)라 시계 방향이 +
+    const s = toScreen(handleWorld);
+    return Math.atan2(e.clientY - s.y, e.clientX - s.x); // 화면 좌표(y 아래)라 시계 방향이 +
   }
 
   function addTurn(d) {
@@ -213,6 +242,9 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     addTurn(Math.min(Math.abs(e.deltaY) * 0.003, 0.5));
   }, { passive: true });
 
+  // 찌그러짐: k>0이면 납작(가로로 퍼짐), k<0이면 길쭉
+  const squash = (base, k) => heroRoot.scale.set(base * (1 + k * 0.6), base * (1 - k), base * (1 + k * 0.6));
+
   // ---- 연출 ----
   async function playReveal(prizeKey) {
     mode = 'busy';
@@ -221,55 +253,69 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     const body = capsules.takeNearest(bottomPt.x, bottomPt.y, bottomPt.z);
     const start = body ? new THREE.Vector3(body.x, body.y, body.z) : bottomPt.clone().setY(bottomPt.y + r);
     heroTopMat.color.setHex(CAPSULE_COLORS[body ? body.color : 0]);
-    heroTopMat.opacity = heroBottomMat.opacity = 1;
+    heroTopMat.opacity = heroBottomMat.opacity = heroInkMat.opacity = 1;
     heroTop.position.set(0, 0, 0); heroTop.rotation.set(0, 0, 0);
     heroBottom.position.set(0, 0, 0); heroBottom.rotation.set(0, 0, 0);
-    if (body) hero.quaternion.set(body.qx, body.qy, body.qz, body.qw); else hero.quaternion.identity();
-    hero.position.copy(start);
-    hero.scale.setScalar(r);
-    hero.visible = true;
+    if (body) heroSpin.quaternion.set(body.qx, body.qy, body.qz, body.qw); else heroSpin.quaternion.identity();
+    heroRoot.position.copy(start);
+    heroRoot.scale.setScalar(r);
+    heroShine.visible = true;
+    heroRoot.visible = true;
 
-    // 1) 돔 → 받침 속 → 배출구 → 트레이
+    // 1) 돔 → 받침 속 → 배출구 → 트레이(쿵, 찌그러졌다 복원)
     const restY = TRAY_POS.y + 0.03 + r;
     const path = new THREE.CatmullRomCurve3([
       start,
-      new THREE.Vector3(start.x * 0.5 - 0.2, 1.0, 0.1),
+      new THREE.Vector3(start.x * 0.5 - 0.25, 1.0, 0.1),
       new THREE.Vector3(EXIT_POS.x, EXIT_POS.y + 0.05, 0.45),
       new THREE.Vector3(EXIT_POS.x, EXIT_POS.y, EXIT_POS.z + 0.05),
       new THREE.Vector3(TRAY_POS.x, restY, TRAY_POS.z),
     ]);
     sfx.roll(1.3);
     tween(0.25, (t) => machine.setFlap(t));
-    await tween(1.3, (t, dt) => { hero.position.copy(path.getPoint(t)); hero.rotateX(dt * 9); }, easeInQuad);
+    await tween(1.3, (t, dt) => { heroRoot.position.copy(path.getPoint(t)); heroSpin.rotateX(dt * 9); }, easeInQuad);
     sfx.thunk();
     tween(0.3, (t) => machine.setFlap(1 - t));
-    await tween(0.35, (t) => { hero.position.y = restY + Math.abs(Math.sin(t * Math.PI * 2)) * 0.08 * (1 - t); });
-    await wait(0.25);
+    await tween(0.45, (t) => {
+      const k = Math.sin(t * Math.PI * 3) * (1 - t);
+      squash(r, 0.35 * k);
+      heroRoot.position.y = restY - r * 0.35 * Math.max(0, k) + Math.abs(Math.sin(t * Math.PI * 2)) * 0.06 * (1 - t);
+    });
+    heroRoot.scale.setScalar(r);
+    await wait(0.2);
 
     // 2) 트레이 → 쇼케이스(크게), 배경 어둡게
-    const from = hero.position.clone();
+    const from = heroRoot.position.clone();
     const lift = new THREE.CatmullRomCurve3([from, new THREE.Vector3(from.x * 0.5, 1.2, 1.8), SHOWCASE.clone()]);
-    const q0 = hero.quaternion.clone(), qUp = new THREE.Quaternion();
+    const q0 = heroSpin.quaternion.clone(), qUp = new THREE.Quaternion();
     dim.visible = true;
-    await tween(0.9, (t) => {
-      hero.position.copy(lift.getPoint(t));
-      hero.scale.setScalar(lerp(r, 0.36, t));
-      hero.quaternion.slerpQuaternions(q0, qUp, t); // 색 반구가 위로 오게 세운다
-      dim.material.opacity = 0.55 * t;
+    await tween(0.85, (t) => {
+      heroRoot.position.copy(lift.getPoint(t));
+      heroRoot.scale.setScalar(lerp(r, 0.36, t));
+      heroSpin.quaternion.slerpQuaternions(q0, qUp, t); // 색 반구가 위로 오게 세운다
+      dim.material.opacity = 0.5 * t;
     }, easeInOutCubic);
 
-    // 3) 흔들기(점점 세게)
+    // 3) 흔들기(점점 세게) → 꾹 눌렸다가 쭉 늘어나는 예비 동작
     let tickAcc = 0;
-    await tween(1.1, (t, dt) => {
-      hero.rotation.set(0, 0, Math.sin(t * 40) * 0.2 * t);
+    await tween(1.0, (t, dt) => {
+      heroSpin.rotation.set(0, 0, Math.sin(t * 42) * 0.22 * t);
       tickAcc += dt;
-      if (tickAcc > 0.11) { tickAcc = 0; sfx.tick(); }
+      if (tickAcc > 0.1) { tickAcc = 0; sfx.tick(); }
     });
+    heroSpin.rotation.set(0, 0, 0);
+    await tween(0.16, (t) => squash(0.36, 0.28 * t));
+    await tween(0.07, (t) => squash(0.36, lerp(0.28, -0.3, t)));
 
-    // 4) 개봉: 반구가 갈라지고 경품 등장
+    // 4) 임팩트: 흰 플래시 + 정지 프레임 → 터짐
     sfx.pop();
+    onImpact(toScreen(SHOWCASE));
+    await wait(0.09);
     sfx.fanfare();
+    camShake = 1;
     fx.burst(SHOWCASE);
+    heroShine.visible = false;
+    heroRoot.scale.setScalar(0.36);
     const prize = prizeObjs[prizeKey];
     prize.position.copy(SHOWCASE);
     prize.rotation.set(0, 0, 0);
@@ -277,20 +323,25 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     prize.visible = true;
     revealed = prize;
     revealT = 0;
-    tween(0.6, (t) => prize.scale.setScalar(Math.max(0.001, easeOutBack(t))));
-    await tween(0.7, (t) => {
-      heroTop.position.set(-1.5 * t, 2.2 * t, 0.5 * t);
-      heroTop.rotation.z = 1.2 * t;
-      heroBottom.position.set(1.4 * t, -2.0 * t, 0.5 * t);
-      heroBottom.rotation.z = -1.0 * t;
-      heroTopMat.opacity = heroBottomMat.opacity = 1 - t;
+    tween(0.6, (t) => {
+      const base = Math.max(0.001, easeOutBack(t));
+      const k = Math.sin(t * Math.PI * 2.5) * (1 - t);
+      prize.scale.set(base * (1 - 0.14 * k), base * (1 + 0.24 * k), base * (1 - 0.14 * k));
     });
-    hero.visible = false;
+    await tween(0.55, (t) => {
+      const e = easeOutCubic(t);
+      heroTop.position.set(-2.2 * e, 2.6 * e, 0.6 * e);
+      heroTop.rotation.z = 1.6 * e;
+      heroBottom.position.set(2.0 * e, -2.4 * e, 0.6 * e);
+      heroBottom.rotation.z = -1.4 * e;
+      heroTopMat.opacity = heroBottomMat.opacity = heroInkMat.opacity = 1 - t * t;
+    });
+    heroRoot.visible = false;
   }
 
   function clearReveal() {
     fx.clear();
-    hero.visible = false;
+    heroRoot.visible = false;
     dim.visible = false;
     dim.material.opacity = 0;
     if (revealed) revealed.visible = false;
@@ -326,10 +377,14 @@ export async function createStage({ canvas, sfx, prizes, title, onTurnComplete }
     }
     capsules.update(dt);
     fx.update(dt);
-    if (machine.hintRing.visible) machine.hintRing.material.opacity = 0.35 + 0.35 * Math.sin(time * 5);
+    if (machine.hintRing.visible) machine.hintRing.material.opacity = 0.45 + 0.45 * Math.sin(time * 6);
+    // 손잡이 딸깍마다 머신이 들썩, 임팩트에 카메라가 흔들
     shake = Math.max(0, shake - dt * 6);
     machine.group.position.x = (Math.random() - 0.5) * 0.03 * shake;
     machine.group.rotation.z = (Math.random() - 0.5) * 0.01 * shake;
+    camShake = Math.max(0, camShake - dt * 2.5);
+    const cs = camShake * camShake * 0.09;
+    camera.position.set(camBase.x + (Math.random() - 0.5) * cs, camBase.y + (Math.random() - 0.5) * cs, camBase.z);
     if (revealed) {
       revealT += dt;
       revealed.rotation.y = Math.sin(revealT * SWAY.speed) * SWAY.angle;

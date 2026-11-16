@@ -97,6 +97,10 @@ export function createUI({ store, handlers }) {
       openEntry();
     } else if (name === 'result') {
       $('resultName').textContent = store.state.stock[data.prize].label;
+      const card = $('result');
+      card.classList.remove('stamp');
+      void card.offsetWidth; // 애니메이션 재시작
+      card.classList.add('stamp');
       startCountdown(AUTO_NEXT_SEC);
     }
   }
@@ -320,7 +324,39 @@ export function createUI({ store, handlers }) {
     if (e.key === 'Escape') { $('pinOv').hidden = true; closeAdmin(); }
   });
 
+  // ---------- 임팩트(캡슐이 터지는 순간): 흰 플래시 + 만화 집중선 ----------
+  function drawSpeedLines(cx, cy) {
+    const c = $('speed');
+    const w = (c.width = window.innerWidth), h = (c.height = window.innerHeight);
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, w, h);
+    const outer = Math.hypot(w, h);
+    const inner = Math.min(w, h) * 0.3;
+    g.fillStyle = 'rgba(251, 246, 232, 0.92)';
+    for (let i = 0; i < 90; i++) {
+      const a = (i / 90) * Math.PI * 2 + Math.random() * 0.05;
+      const spread = 0.007 + Math.random() * 0.02;
+      const r0 = inner * (0.9 + Math.random() * 0.6);
+      g.beginPath();
+      g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      g.lineTo(cx + Math.cos(a - spread) * outer, cy + Math.sin(a - spread) * outer);
+      g.lineTo(cx + Math.cos(a + spread) * outer, cy + Math.sin(a + spread) * outer);
+      g.closePath();
+      g.fill();
+    }
+  }
+
+  function impact({ x, y } = { x: window.innerWidth / 2, y: window.innerHeight * 0.4 }) {
+    $('flash').animate([{ opacity: 0.95 }, { opacity: 0.95, offset: 0.25 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' });
+    drawSpeedLines(x, y);
+    $('speed').animate(
+      [{ opacity: 0, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)', offset: 0.15 }, { opacity: 0, transform: 'scale(0.98)' }],
+      { duration: 900, easing: 'ease-out' },
+    );
+  }
+
   return {
+    impact,
     renderTitle,
     renderStock,
     setScreen,

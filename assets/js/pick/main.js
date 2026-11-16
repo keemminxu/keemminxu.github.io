@@ -129,9 +129,9 @@ async function boot() {
     stage = await createStage({
       canvas: document.getElementById('stage'),
       sfx,
-      title: store.state.settings.title,
       prizes: Object.fromEntries(PRIZE_KEYS.map((k) => [k, { url: glbUrl(k), label: store.state.stock[k].label }])),
       onTurnComplete: doDraw,
+      onImpact: (at) => ui.impact(at),
     });
     stage.setCapsuleCount(visibleCount());
   } catch (e) {

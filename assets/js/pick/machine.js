@@ -1,16 +1,14 @@
-// 가챠 머신 — three 기본 도형만으로 만든다(외부 모델 없음)
+// 가챠 머신 — 기본 도형 + 툰(셀 셰이딩·잉크 외곽선). 앞판에 포스터의 은크크Pick 도장.
 import * as THREE from 'three';
-
-export const COLORS = {
-  green900: 0x0f3d24, green700: 0x1d6b3c, green500: 0x2f8f4e,
-  yellow: 0xffe14d, cream: 0xf6f1e3, pink: 0xf4a6c0, orange: 0xf39a52, ink: 0x14231a,
-};
+import { PAL, INK, toonMat, inkHull, toonGlass } from './toon.js';
 
 // 머신 로컬 좌표(머신 그룹은 원점에 둔다)
 export const DOME = { center: new THREE.Vector3(0, 2.15, 0), radius: 1.0 };
-export const HANDLE_POS = new THREE.Vector3(0.42, 0.48, 0.74);
-export const EXIT_POS = new THREE.Vector3(-0.42, 0.44, 0.73);
-export const TRAY_POS = new THREE.Vector3(-0.42, 0.14, 0.95);
+export const HANDLE_POS = new THREE.Vector3(0.52, 0.46, 0.74);
+export const EXIT_POS = new THREE.Vector3(-0.52, 0.42, 0.73);
+export const TRAY_POS = new THREE.Vector3(-0.52, 0.14, 0.95);
+
+const STAMP_URL = new URL('../../images/eunkk-pick/stamp.png', import.meta.url).href;
 
 function roundedRectShape(w, h, r) {
   const s = new THREE.Shape();
@@ -34,121 +32,99 @@ function roundedBox(w, h, d, r) {
   return g;
 }
 
-function textTexture(w, h, draw) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  draw(c.getContext('2d'), w, h);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  return t;
+// 납작한 도형(원판·스티커)은 뒷면 외곽선이 안 보이므로 잉크 판을 뒤에 깐다
+function inkBacking(geometry, pad, z = -0.004) {
+  const m = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: INK }));
+  m.scale.setScalar(pad);
+  m.position.z = z;
+  return m;
 }
 
-export function buildMachine(scene, { title = '은크크 Pick' } = {}) {
+export function buildMachine(scene) {
   const group = new THREE.Group();
   scene.add(group);
-  const std = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.05, ...extra });
+  const part = (geo, color, pos, extra) => {
+    const m = inkHull(new THREE.Mesh(geo, toonMat(color, extra)));
+    if (pos) m.position.copy(pos);
+    group.add(m);
+    return m;
+  };
 
-  // 받침
-  const base = new THREE.Mesh(roundedBox(1.7, 1.15, 1.45, 0.16), std(COLORS.green700));
-  base.position.y = 0.575;
-  group.add(base);
+  // 받침 + 다리
+  part(roundedBox(1.7, 1.1, 1.45, 0.18), PAL.yellow, new THREE.Vector3(0, 0.6, 0));
+  for (const [x, z] of [[-0.62, -0.5], [0.62, -0.5], [-0.62, 0.5], [0.62, 0.5]]) {
+    part(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 20), PAL.green700, new THREE.Vector3(x, 0.04, z));
+  }
+  // 받침 위 테두리, 뚜껑, 꼭지
+  part(new THREE.CylinderGeometry(0.84, 0.88, 0.16, 48), PAL.green700, new THREE.Vector3(0, 1.22, 0));
+  part(new THREE.CylinderGeometry(0.3, 0.34, 0.18, 32), PAL.green700, new THREE.Vector3(0, DOME.center.y + DOME.radius + 0.02, 0));
+  part(new THREE.SphereGeometry(0.11, 24, 16), PAL.pink, new THREE.Vector3(0, DOME.center.y + DOME.radius + 0.17, 0));
 
-  // 받침 위 테두리
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.86, 0.14, 48), std(COLORS.yellow, { roughness: 0.35 }));
-  collar.position.y = 1.22;
-  group.add(collar);
-
-  // 유리 돔 + 뚜껑
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(DOME.radius, 64, 48),
-    new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, shininess: 140, specular: 0xffffff, depthWrite: false }),
-  );
+  // 툰 유리 돔(캡슐보다 나중에 그린다)
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(DOME.radius, 64, 48), toonGlass());
   dome.position.copy(DOME.center);
   dome.renderOrder = 2;
   group.add(dome);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.16, 32), std(COLORS.yellow, { roughness: 0.35 }));
-  cap.position.y = DOME.center.y + DOME.radius + 0.02;
-  group.add(cap);
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 16), std(COLORS.pink, { roughness: 0.3 }));
-  knob.position.y = cap.position.y + 0.14;
-  group.add(knob);
 
-  // 앞면 로고 판
-  const logo = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.25, 0.32),
-    new THREE.MeshBasicMaterial({
-      map: textTexture(1000, 256, (g, w, h) => {
-        g.fillStyle = '#f6f1e3';
-        g.beginPath(); g.roundRect(8, 8, w - 16, h - 16, 60); g.fill();
-        g.fillStyle = '#1d6b3c';
-        g.font = '700 150px ChaiHwaljjak, "Malgun Gothic", sans-serif';
-        g.textAlign = 'center'; g.textBaseline = 'middle';
-        g.fillText(title, w / 2, h / 2 + 8);
-      }),
-      transparent: true,
-    }),
-  );
-  logo.position.set(0, 0.9, 0.726);
-  group.add(logo);
+  // 앞판 도장 스티커(살짝 기울임) + 잉크 그림자
+  const stampTex = new THREE.TextureLoader().load(STAMP_URL);
+  stampTex.colorSpace = THREE.SRGBColorSpace;
+  stampTex.anisotropy = 4;
+  const stampGeo = new THREE.PlaneGeometry(0.6, 0.59);
+  const stamp = new THREE.Mesh(stampGeo, new THREE.MeshBasicMaterial({ map: stampTex, transparent: true, alphaTest: 0.5 }));
+  const stampShadow = new THREE.Mesh(stampGeo, new THREE.MeshBasicMaterial({ color: INK, alphaMap: stampTex, transparent: true, alphaTest: 0.5 }));
+  stamp.position.set(0, 0.8, 0.735);
+  stamp.rotation.z = 0.06;
+  stampShadow.position.set(0.025, 0.775, 0.732);
+  stampShadow.rotation.z = 0.06;
+  group.add(stampShadow, stamp);
 
-  // 손잡이(시계 방향으로 돈다) — 받침판 + 회전하는 원판·막대
-  const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.02, 48), std(COLORS.green900));
+  // 손잡이: 받침판 + 시계 방향으로 도는 원판·막대
+  const bezel = part(new THREE.CylinderGeometry(0.25, 0.25, 0.03, 48), PAL.green900, HANDLE_POS.clone().setZ(HANDLE_POS.z - 0.015));
   bezel.rotation.x = Math.PI / 2;
-  bezel.position.copy(HANDLE_POS).setZ(HANDLE_POS.z - 0.01);
-  group.add(bezel);
   const handle = new THREE.Group();
   handle.position.copy(HANDLE_POS);
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 40), std(COLORS.yellow, { roughness: 0.3 }));
+  const disc = inkHull(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 40), toonMat(PAL.orange)));
   disc.rotation.x = Math.PI / 2;
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.09, 0.07), std(COLORS.cream, { roughness: 0.3 }));
-  bar.position.z = 0.05;
+  const bar = inkHull(new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.09, 0.08), toonMat(PAL.cream)));
+  bar.position.z = 0.06;
   handle.add(disc, bar);
   group.add(handle);
 
   // 손잡이 안내 링(READY에서 깜빡임)
   const hintRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.31, 0.36, 48),
-    new THREE.MeshBasicMaterial({ color: COLORS.yellow, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
+    new THREE.RingGeometry(0.29, 0.34, 48),
+    new THREE.MeshBasicMaterial({ color: PAL.cream, transparent: true, opacity: 0, depthWrite: false }),
   );
-  hintRing.position.copy(HANDLE_POS).setZ(HANDLE_POS.z + 0.03);
+  hintRing.position.copy(HANDLE_POS).setZ(HANDLE_POS.z + 0.04);
   hintRing.visible = false;
   group.add(hintRing);
 
-  // 배출구 + 위쪽 경첩으로 열리는 덮개
-  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.17, 32), new THREE.MeshBasicMaterial({ color: COLORS.ink }));
+  // 배출구 + 위쪽 경첩으로 열리는 분홍 덮개
+  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.15, 32), new THREE.MeshBasicMaterial({ color: INK }));
   hole.position.copy(EXIT_POS);
   group.add(hole);
   const flapPivot = new THREE.Group();
-  flapPivot.position.set(EXIT_POS.x, EXIT_POS.y + 0.17, EXIT_POS.z + 0.01);
-  const flap = new THREE.Mesh(new THREE.CircleGeometry(0.17, 32), std(COLORS.pink, { transparent: true, opacity: 0.85 }));
-  flap.position.y = -0.17;
+  flapPivot.position.set(EXIT_POS.x, EXIT_POS.y + 0.15, EXIT_POS.z + 0.012);
+  const flapGeo = new THREE.CircleGeometry(0.14, 32);
+  const flap = new THREE.Mesh(flapGeo, toonMat(PAL.pink));
+  flap.position.y = -0.15;
+  flap.add(inkBacking(flapGeo, 1.14));
   flapPivot.add(flap);
   group.add(flapPivot);
 
   // 받침 트레이
-  const trayMat = std(COLORS.cream, { roughness: 0.4 });
-  const trayBottom = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.34), trayMat);
-  trayBottom.position.copy(TRAY_POS);
-  const trayLip = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.04), trayMat);
-  trayLip.position.set(TRAY_POS.x, TRAY_POS.y + 0.05, TRAY_POS.z + 0.17);
-  group.add(trayBottom, trayLip);
+  part(new THREE.BoxGeometry(0.5, 0.06, 0.34), PAL.green700, TRAY_POS);
+  part(new THREE.BoxGeometry(0.5, 0.12, 0.04), PAL.green700, new THREE.Vector3(TRAY_POS.x, TRAY_POS.y + 0.05, TRAY_POS.z + 0.17));
 
-  // 바닥 그림자(그림자 맵 대신 블롭 텍스처)
+  // 바닥 그림자(납작한 잉크 타원)
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.2, 3.2),
-    new THREE.MeshBasicMaterial({
-      map: textTexture(256, 256, (g, w) => {
-        const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
-        gr.addColorStop(0, 'rgba(5,25,14,0.55)');
-        gr.addColorStop(1, 'rgba(5,25,14,0)');
-        g.fillStyle = gr; g.fillRect(0, 0, w, w);
-      }),
-      transparent: true, depthWrite: false,
-    }),
+    new THREE.CircleGeometry(1.25, 48),
+    new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.3, depthWrite: false }),
   );
   shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.002;
+  shadow.scale.set(1.1, 0.75, 1);
+  shadow.position.set(0.08, 0.002, 0.15);
   group.add(shadow);
 
   return {
