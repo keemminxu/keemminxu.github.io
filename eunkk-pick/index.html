@@ -1,0 +1,217 @@
+---
+layout: null
+permalink: /eunkk-pick/
+sitemap: false
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>은크크 Pick</title>
+<style>
+  @font-face {
+    font-family: 'ChaiHwaljjak';
+    src: url('/assets/fonts/ChaiHwaljjak/ChaiHwaljjak-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+  :root {
+    --green-900: #0f3d24; --green-700: #1d6b3c; --green-500: #2f8f4e;
+    --yellow: #ffe14d; --cream: #f6f1e3; --pink: #f4a6c0; --orange: #f39a52; --ink: #14231a; --red: #d64545;
+    --display: 'ChaiHwaljjak', 'Malgun Gothic', sans-serif;
+    --ui: 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(ellipse at 50% 38%, var(--green-500) 0%, var(--green-700) 45%, var(--green-900) 100%);
+    color: var(--cream); font-family: var(--ui); user-select: none;
+  }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; }
+  body.no3d #stage { display: none; }
+
+  .brand { position: fixed; left: 3vw; top: 3.5vh; }
+  .brand h1 { margin: 0; font: 700 4.4vw/1 var(--display); color: var(--cream); letter-spacing: -0.02em; }
+  .brand h1 b { color: var(--yellow); }
+  .brand p { margin: 1.2vh 0 0; font-size: 1.3vw; opacity: 0.85; }
+
+  .stock { position: fixed; right: 3vw; top: 50%; transform: translateY(-50%); display: grid; gap: 1.6vh; width: 15vw; }
+  .card { background: var(--cream); color: var(--ink); border-radius: 1.2vw; padding: 1.4vh 1.2vw 1.6vh; display: grid; grid-template-columns: 1fr auto; align-items: baseline; border-left: 0.7vw solid var(--pink); }
+  .card.orange { border-left-color: var(--orange); }
+  .card.yellow { border-left-color: var(--yellow); }
+  .card .label { font-size: 1.3vw; font-weight: 700; }
+  .card .num { font: 700 3.6vw/1 var(--display); color: var(--green-700); text-align: right; }
+  .card .unit { grid-column: 1 / -1; font-size: 0.9vw; opacity: 0.7; text-align: right; }
+  .card .bar { grid-column: 1 / -1; height: 0.6vh; background: #e2dccb; border-radius: 1vh; overflow: hidden; margin-top: 0.8vh; }
+  .card .bar i { display: block; height: 100%; background: var(--green-500); transition: width 0.4s; }
+  .card.empty { opacity: 0.45; }
+
+  .action, .result { position: fixed; left: 50%; bottom: 4vh; transform: translateX(-50%); text-align: center; }
+  .hint { margin: 0 0 1.4vh; font-size: 1.5vw; font-weight: 700; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+  .btn-primary, .btn-ghost, .btn-danger { font: 700 1.1rem var(--ui); border: 0; border-radius: 999px; padding: 0.8em 1.6em; cursor: pointer; }
+  .btn-primary { background: var(--yellow); color: var(--ink); box-shadow: 0 6px 0 #c9a91a; }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 3px 0 #c9a91a; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .action .btn-primary, .result .btn-primary { font-size: 1.6vw; }
+  .btn-ghost { background: transparent; color: inherit; border: 2px solid currentColor; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger[data-armed] { background: #8f1f1f; }
+
+  .result { background: rgba(15, 61, 36, 0.85); border: 3px solid var(--yellow); border-radius: 2vw; padding: 2.2vh 3vw; min-width: 36vw; }
+  .result-title { margin: 0; font: 700 4.4vw/1.1 var(--display); color: var(--yellow); }
+  .result-sub { margin: 1vh 0 2vh; font-size: 1.4vw; }
+
+  .loading { position: fixed; inset: 0; display: grid; place-items: center; font: 700 2vw var(--display); }
+
+  .ov { position: fixed; inset: 0; background: rgba(6, 24, 13, 0.72); display: grid; place-items: center; z-index: 10; }
+  .panel { background: var(--cream); color: var(--ink); border-radius: 24px; padding: 32px 36px; width: min(720px, 92vw); max-height: 92vh; overflow: auto; user-select: text; }
+  .panel.narrow { width: min(420px, 92vw); }
+  .panel.center { text-align: center; }
+  .panel h2 { margin: 0 0 20px; font: 700 2rem var(--display); color: var(--green-700); }
+  .panel h2.big { font-size: 3rem; }
+  .panel p { font-size: 1.1rem; line-height: 1.6; }
+  .field { display: grid; gap: 6px; margin-bottom: 16px; font-size: 1.1rem; font-weight: 700; }
+  .field input, .panel input:not([type=checkbox]) { font: 400 1.3rem var(--ui); padding: 10px 14px; border: 2px solid #cfc7b0; border-radius: 12px; background: #fff; color: var(--ink); width: 100%; }
+  .mask-hint { font-weight: 400; color: var(--green-700); min-height: 1.2em; }
+  .consent { background: #ece5d1; border-radius: 12px; padding: 12px 16px; margin: 8px 0 16px; }
+  .consent p { margin: 0 0 8px; font-size: 0.95rem; }
+  .check { display: flex; gap: 8px; align-items: center; font-weight: 700; cursor: pointer; }
+  .check input { width: 22px; height: 22px; }
+  .err { color: var(--red); font-size: 0.95rem; margin: 4px 0 0; min-height: 1.1em; font-weight: 400; }
+  .row-btns { display: flex; gap: 12px; justify-content: flex-end; margin-top: 12px; }
+  .row-btns.wrap { flex-wrap: wrap; justify-content: flex-start; }
+
+  .banner { position: fixed; top: 0; left: 0; right: 0; background: var(--red); color: #fff; padding: 12px 20px; font-weight: 700; text-align: center; z-index: 20; }
+  .toast { position: fixed; top: 3vh; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--cream); padding: 10px 22px; border-radius: 999px; font-weight: 700; z-index: 30; }
+  .gear { position: fixed; right: 14px; bottom: 12px; background: none; border: 0; color: var(--cream); font-size: 22px; opacity: 0.35; cursor: pointer; z-index: 5; }
+  .gear:hover { opacity: 1; }
+
+  .admin { position: fixed; top: 0; right: 0; bottom: 0; width: min(600px, 100vw); background: var(--cream); color: var(--ink); overflow: auto; padding: 24px 28px 40px; z-index: 15; box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35); user-select: text; }
+  .admin-head { display: flex; justify-content: space-between; align-items: center; }
+  .admin h2 { margin: 0; font: 700 1.8rem var(--display); color: var(--green-700); }
+  .admin h3 { margin: 24px 0 10px; font-size: 1.1rem; }
+  .admin label:not(.check) { display: grid; gap: 4px; margin-bottom: 10px; font-size: 0.95rem; font-weight: 700; }
+  .admin input:not([type=checkbox]) { font-size: 1rem; padding: 8px 10px; }
+  .admin .check { margin-bottom: 8px; }
+  .admin table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  .admin th, .admin td { padding: 6px 8px; border-bottom: 1px solid #ddd4bd; text-align: left; }
+  .stock-edit th { white-space: nowrap; }
+  .stock-edit input { width: 100%; }
+  .btn-primary.wide { width: 100%; margin-top: 8px; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="캡슐 뽑기 머신"></canvas>
+
+<header class="brand">
+  <h1 id="brandTitle">은크크 <b>Pick</b></h1>
+  <p>대조시장 참여 점포 영수증 1장 = 뽑기 1회</p>
+</header>
+
+<aside class="stock" id="stock" aria-live="polite"></aside>
+
+<div class="action" id="action" hidden>
+  <p class="hint" id="hint"></p>
+  <button class="btn-primary" id="primaryBtn" type="button"></button>
+</div>
+
+<section class="result" id="result" hidden aria-live="assertive">
+  <p class="result-title"><span id="resultName"></span> 당첨!</p>
+  <p class="result-sub">부스 스태프에게 굿즈를 받아 가세요</p>
+  <button class="btn-primary" id="nextBtn" type="button">다음 참가자 <span id="nextCount"></span></button>
+</section>
+
+<div class="loading" id="loading">머신을 준비하고 있어요…</div>
+
+<div class="ov" id="entryOv" hidden>
+  <form class="panel" id="entryForm" novalidate autocomplete="off">
+    <h2>참가자 정보</h2>
+    <div id="entryFields"></div>
+    <div class="consent">
+      <p id="consentText"></p>
+      <label class="check"><input type="checkbox" id="consentChk"> 개인정보 수집·이용에 동의해요</label>
+      <p class="err" data-err="consent"></p>
+    </div>
+    <p class="err" id="consentMissing" hidden>관리자 화면에서 개인정보 동의 문구(수집 주체·목적·보유 기간)를 먼저 입력해 주세요.</p>
+    <div class="row-btns">
+      <button type="button" class="btn-ghost" id="entryCancel">취소</button>
+      <button type="submit" class="btn-primary" id="entrySubmit">뽑으러 가기</button>
+    </div>
+  </form>
+</div>
+
+<div class="ov" id="soldoutOv" hidden>
+  <div class="panel center"><h2 class="big">모든 굿즈가 소진됐어요</h2><p>참여해 주셔서 고맙습니다!</p></div>
+</div>
+
+<div class="ov" id="setupOv" hidden>
+  <div class="panel center">
+    <h2>재고를 먼저 입력해 주세요</h2>
+    <p>관리자 화면에서 수건·컵·장바구니 수량을 넣으면 시작할 수 있어요.<br>
+      처음 열 때 주소 뒤에 <code>?towel=30&amp;cup=20&amp;bag=25</code>처럼 붙여도 돼요.</p>
+    <button class="btn-primary" id="setupAdmin" type="button">관리자 열기</button>
+  </div>
+</div>
+
+<div class="banner" id="storeWarn" hidden>이 브라우저에 기록을 저장할 수 없어요. 시크릿 창이 아닌지 확인하고 새로 고쳐 주세요. 저장되기 전까지 뽑기를 잠가 둘게요.</div>
+<div class="toast" id="toast" hidden></div>
+<button class="gear" id="gear" type="button" aria-label="관리자 화면">⚙</button>
+
+<div class="ov" id="pinOv" hidden>
+  <form class="panel narrow" id="pinForm" autocomplete="off">
+    <h2>관리자 비밀번호</h2>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="8" aria-label="비밀번호">
+    <p class="err" id="pinErr"></p>
+    <div class="row-btns">
+      <button type="button" class="btn-ghost" id="pinCancel">취소</button>
+      <button type="submit" class="btn-primary">열기</button>
+    </div>
+  </form>
+</div>
+
+<aside class="admin" id="admin" hidden>
+  <div class="admin-head"><h2>관리자</h2><button type="button" class="btn-ghost" id="adminClose">닫기</button></div>
+  <h3>재고</h3>
+  <table class="stock-edit">
+    <thead><tr><th>경품</th><th>총수량</th><th>남은 수량</th></tr></thead>
+    <tbody id="stockEdit"></tbody>
+  </table>
+  <h3>행사</h3>
+  <label>제목 <input id="aTitle"></label>
+  <label>새 비밀번호 (숫자 4~8자리, 비우면 그대로) <input id="aPin" type="password" inputmode="numeric" maxlength="8"></label>
+  <label class="check"><input type="checkbox" id="aSound"> 효과음</label>
+  <h3>참가자 정보 수집</h3>
+  <label class="check"><input type="checkbox" id="fName"> 이름</label>
+  <label class="check"><input type="checkbox" id="fPhone"> 휴대폰</label>
+  <label class="check"><input type="checkbox" id="fBirth"> 생년월일</label>
+  <label>수집 주체 <input id="cOrg"></label>
+  <label>수집 목적 <input id="cPurpose"></label>
+  <label>보유 기간 <input id="cRetention"></label>
+  <label>문의처 <input id="cContact"></label>
+  <p class="err" id="adminErr"></p>
+  <button class="btn-primary wide" id="adminSave" type="button">저장</button>
+  <h3>기록 <span id="drawCount"></span></h3>
+  <div class="row-btns wrap">
+    <button type="button" class="btn-ghost" id="csvBtn">CSV 내보내기</button>
+    <button type="button" class="btn-danger" id="undoBtn">마지막 뽑기 취소</button>
+    <button type="button" class="btn-danger" id="purgeBtn">개인정보 파기</button>
+    <button type="button" class="btn-danger" id="resetBtn">전체 초기화</button>
+  </div>
+  <table class="log">
+    <thead><tr><th>#</th><th>시각</th><th>경품</th><th>이름</th><th>휴대폰</th></tr></thead>
+    <tbody id="logBody"></tbody>
+  </table>
+</aside>
+
+<script type="importmap">
+  {"imports":{
+    "three":"{{ '/assets/vendor/three-0.185.1/three.module.min.js' | relative_url }}",
+    "three/addons/":"{{ '/assets/vendor/three-0.185.1/jsm/' | relative_url }}"
+  }}
+</script>
+<script type="module" src="{{ '/assets/js/pick/main.js' | relative_url }}"></script>
+</body>
+</html>
