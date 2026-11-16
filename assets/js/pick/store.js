@@ -11,7 +11,7 @@ export function defaultState() {
     settings: {
       title: '은크크 Pick',
       pin: '0000', // 실수 방지용. 보안 장치 아님
-      fields: { name: false, phone: false, birth: false },
+      fields: { name: false, phone: false, birth: false, gender: false },
       consent: { org: '', purpose: '', retention: '', contact: '' },
       sound: true,
       showStock: true, // 화면 오른쪽 남은 개수 표시
@@ -75,9 +75,9 @@ function csvCell(v) {
 }
 
 export function toCSV(state) {
-  const rows = [['순번', '시각', '경품', '이름', '휴대폰', '생년월일']];
+  const rows = [['순번', '시각', '경품', '이름', '휴대폰', '생년월일', '성별']];
   for (const d of state.draws) {
-    rows.push([d.no, d.at, state.stock[d.prize] ? state.stock[d.prize].label : d.prize, d.name, d.phone, d.birth]);
+    rows.push([d.no, d.at, state.stock[d.prize] ? state.stock[d.prize].label : d.prize, d.name, d.phone, d.birth, d.gender]);
   }
   return '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
@@ -151,6 +151,7 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
         name: entry.name || '',
         phone: entry.phone || '',
         birth: entry.birth || '',
+        gender: entry.gender || '',
         shown: false,
       };
       s.left -= 1;
@@ -183,7 +184,7 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
     },
 
     purgePersonal() {
-      for (const r of state.draws) { r.name = ''; r.phone = ''; r.birth = ''; }
+      for (const r of state.draws) { r.name = ''; r.phone = ''; r.birth = ''; r.gender = ''; }
       save(); emit();
     },
 

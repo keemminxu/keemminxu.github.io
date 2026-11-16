@@ -1,5 +1,5 @@
 // 화면(DOM) — HUD, 정보 입력, 결과, 오버레이, 관리자 패널
-import { anyField, validateEntry, lastDigits } from './entry.js';
+import { anyField, validateEntry, lastDigits, maskPhoneInput, editDigits, GENDERS } from './entry.js';
 import { PRIZE_KEYS } from './draw.js';
 
 const $ = (id) => document.getElementById(id);
@@ -15,14 +15,80 @@ export const maskName = (s) => {
 };
 export const maskPhone = (s) => (s ? '***-****-' + lastDigits(s) : '');
 
+// 휴대폰은 010-****-5678로 보이고(bindPhoneMask), 생년월일은 전부 점으로 가린다(.secret).
+// 둘 다 type=password를 쓰지 않는다: 브라우저가 비밀번호 칸으로 보고 저장·자동 완성을 띄우지 않게.
 const FIELD_DEFS = [
   { key: 'name', label: '이름', attrs: { type: 'text', maxLength: 20 } },
-  { key: 'phone', label: '휴대폰 번호', attrs: { type: 'password', inputMode: 'numeric', maxLength: 13 }, masked: true },
-  { key: 'birth', label: '생년월일 8자리', attrs: { type: 'password', inputMode: 'numeric', maxLength: 10 }, masked: true },
+  { key: 'phone', label: '휴대폰 번호', attrs: { type: 'text', inputMode: 'numeric' } },
+  { key: 'birth', label: '생년월일 8자리', attrs: { type: 'text', inputMode: 'numeric', maxLength: 10, className: 'secret' } },
+  { key: 'gender', label: '성별', choices: GENDERS },
 ];
+
+// 화면에는 가린 값만 두고 실제 숫자는 따로 들고 있는다. 반환값은 실제 숫자를 읽는 함수.
+function bindPhoneMask(input) {
+  let buf = '';
+  const render = () => {
+    input.value = maskPhoneInput(buf);
+    input.setSelectionRange(input.value.length, input.value.length);
+  };
+  input.addEventListener('beforeinput', (e) => {
+    if (e.isComposing || e.inputType === 'insertCompositionText' || e.inputType === 'insertLineBreak') return;
+    e.preventDefault();
+    const all = input.value.length > 0 && input.selectionStart === 0 && input.selectionEnd === input.value.length;
+    const data = e.data ?? (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '');
+    buf = editDigits(buf, { inputType: e.inputType, data, all });
+    render();
+  });
+  // 막을 수 없는 입력(한글 조합 등)은 맨 뒤에 붙은 숫자만 받고 다시 그린다
+  const sync = () => {
+    const shown = maskPhoneInput(buf);
+    if (input.value.startsWith(shown)) buf = editDigits(buf, { inputType: 'insertText', data: input.value.slice(shown.length) });
+    render();
+  };
+  input.addEventListener('input', (e) => { if (!e.isComposing) sync(); });
+  input.addEventListener('compositionend', sync);
+  return () => buf;
+}
+
+function textField(def) {
+  const wrap = document.createElement('label');
+  wrap.className = 'field';
+  const span = document.createElement('span');
+  span.textContent = def.label;
+  const input = document.createElement('input');
+  input.name = def.key;
+  input.autocomplete = 'off';
+  Object.assign(input, def.attrs);
+  wrap.append(span, input);
+  return { wrap, input };
+}
+
+// 큰 버튼처럼 보이는 라디오(남·여)
+function choiceField(def) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  const span = document.createElement('span');
+  span.textContent = def.label;
+  const row = document.createElement('div');
+  row.className = 'choice';
+  row.setAttribute('role', 'radiogroup');
+  row.setAttribute('aria-label', def.label);
+  for (const v of def.choices) {
+    const lab = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = def.key; radio.value = v;
+    const text = document.createElement('span');
+    text.textContent = v;
+    lab.append(radio, text);
+    row.append(lab);
+  }
+  wrap.append(span, row);
+  return { wrap };
+}
 
 export function createUI({ store, handlers }) {
   let toastTimer = null, adminEnabled = true;
+  let readPhone = () => '';
 
   // ---------- HUD ----------
   // 왼쪽 위는 로고 스티커. 제목 설정은 탭 제목과 로고 대체 텍스트에만 쓴다.
@@ -88,23 +154,11 @@ export function createUI({ store, handlers }) {
     const { fields, consent } = store.state.settings;
     const box = $('entryFields');
     box.textContent = '';
+    readPhone = () => '';
     for (const def of FIELD_DEFS) {
       if (!fields[def.key]) continue;
-      const wrap = document.createElement('label');
-      wrap.className = 'field';
-      const span = document.createElement('span');
-      span.textContent = def.label;
-      const input = document.createElement('input');
-      input.name = def.key;
-      input.autocomplete = 'off';
-      Object.assign(input, def.attrs);
-      wrap.append(span, input);
-      if (def.masked) {
-        const hint = document.createElement('small');
-        hint.className = 'mask-hint';
-        input.addEventListener('input', () => { hint.textContent = input.value ? '끝자리 ' + lastDigits(input.value) : ''; });
-        wrap.append(hint);
-      }
+      const { wrap, input } = def.choices ? choiceField(def) : textField(def);
+      if (def.key === 'phone') readPhone = bindPhoneMask(input);
       const err = document.createElement('p');
       err.className = 'err';
       err.dataset.err = def.key;
@@ -130,7 +184,7 @@ export function createUI({ store, handlers }) {
     const form = $('entryForm');
     const get = (n) => (form.elements[n] ? form.elements[n].value : '');
     const res = validateEntry(store.state.settings.fields, {
-      name: get('name'), phone: get('phone'), birth: get('birth'), consent: $('consentChk').checked,
+      name: get('name'), phone: readPhone(), birth: get('birth'), gender: get('gender'), consent: $('consentChk').checked,
     });
     clearErrors();
     if (!res.ok) {
@@ -202,6 +256,7 @@ export function createUI({ store, handlers }) {
     $('fName').checked = s.fields.name;
     $('fPhone').checked = s.fields.phone;
     $('fBirth').checked = s.fields.birth;
+    $('fGender').checked = s.fields.gender;
     $('cOrg').value = s.consent.org;
     $('cPurpose').value = s.consent.purpose;
     $('cRetention').value = s.consent.retention;
@@ -235,7 +290,7 @@ export function createUI({ store, handlers }) {
   $('adminSave').addEventListener('click', () => {
     const pin = $('aPin').value.trim();
     if (pin && !/^\d{4,8}$/.test(pin)) { $('adminErr').textContent = '비밀번호는 숫자 4~8자리예요.'; return; }
-    const fields = { name: $('fName').checked, phone: $('fPhone').checked, birth: $('fBirth').checked };
+    const fields = { name: $('fName').checked, phone: $('fPhone').checked, birth: $('fBirth').checked, gender: $('fGender').checked };
     const consent = { org: $('cOrg').value.trim(), purpose: $('cPurpose').value.trim(), retention: $('cRetention').value.trim(), contact: $('cContact').value.trim() };
     if (anyField(fields) && (!consent.org || !consent.purpose || !consent.retention)) {
       $('adminErr').textContent = '정보를 수집하려면 수집 주체·목적·보유 기간을 입력해 주세요.';

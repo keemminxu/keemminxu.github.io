@@ -53,7 +53,7 @@ localStorage 키 `eunkk-pick-v1`, 값은 JSON 하나.
   settings: {
     title: "은크크 Pick",
     pin: "0000",                       // 실수 방지용. 보안 장치 아님
-    fields: { name: false, phone: false, birth: false },
+    fields: { name: false, phone: false, birth: false, gender: false },
     consent: { org: "", purpose: "", retention: "", contact: "" },
     sound: true
   },
@@ -72,9 +72,9 @@ localStorage 키 `eunkk-pick-v1`, 값은 JSON 하나.
 - `commitDraw(prize, entry)`: `left` 1 감소 + `draws`에 추가(`shown: false`) + 즉시 저장. 저장이 실패하면 예외를 던지고 연출을 시작하지 않는다.
 - `markShown(no)`: 결과 화면을 보여 준 뒤 `shown: true`.
 - `undoLast()`: 마지막 기록 삭제 + 해당 경품 `left` 1 복구.
-- `purgePersonal()`: 모든 기록의 `name/phone/birth`를 빈 문자열로. 시각·경품은 남긴다.
+- `purgePersonal()`: 모든 기록의 `name/phone/birth/gender`를 빈 문자열로. 시각·경품은 남긴다.
 - `resetAll()`: 기록 삭제 + `left = total`.
-- `toCSV()`: UTF-8 BOM + `순번,시각,경품,이름,휴대폰,생년월일`. 꺼진 항목의 열은 빼지 않고 빈 값으로 둔다(열 구성 고정).
+- `toCSV()`: UTF-8 BOM + `순번,시각,경품,이름,휴대폰,생년월일,성별`. 꺼진 항목의 열은 빼지 않고 빈 값으로 둔다(열 구성 고정).
 
 ## 4. 뽑기 흐름 (상태 머신, `main.js`)
 
@@ -84,7 +84,7 @@ SETUP ─(재고 입력)→ LOCKED ─(입장)→ READY ─(손잡이 1바퀴)�
 ```
 
 - **LOCKED**: 머신은 대기 애니메이션(캡슐이 가볍게 출렁). 화면 아래 버튼 하나:
-  - 수집 항목이 하나라도 켜져 있으면 "참가하기" → 정보 입력 + 동의 오버레이. 휴대폰·생년월일 입력칸은 `type="password"` + `inputmode="numeric"`, 아래에 "끝자리 1234"만 표시(미러링 화면에 번호가 노출되지 않게). 형식 검사 후 "뽑으러 가기"로 READY.
+  - 수집 항목이 하나라도 켜져 있으면 "참가하기" → 정보 입력 + 동의 오버레이. 미러링 화면에 번호가 노출되지 않게 휴대폰 칸은 입력하는 동안에도 `010-****-5678`처럼 가운데 4자리만 가리고(실제 숫자는 따로 보관), 생년월일 칸은 전부 점으로 가린다(`-webkit-text-security`). 끝자리 안내 문구는 없다. 브라우저가 비밀번호 칸으로 보지 않게 `type="password"`는 쓰지 않는다. 성별은 남·여 버튼 중 하나를 고른다. 형식 검사 후 "뽑으러 가기"로 READY.
   - 모두 꺼져 있으면 "영수증 확인 완료" 버튼(스태프가 누름) → READY.
 - **READY**: 손잡이에 하이라이트와 "돌려 주세요" 안내. 손잡이를 시계 방향으로 끌어 돌린다(포인터 각도 누적, 역방향 무시). 45°마다 래칫 소리와 머신 흔들림, 캡슐 교반. 스페이스/엔터를 누르면 자동으로 1바퀴(스태프 보조용).
 - **COMMIT**: 1바퀴(360°)가 되는 순간 `draw.js`로 경품을 정하고 `store.commitDraw`로 저장한다. **연출 전에 저장**하므로 연출 중 새로 고침·오류가 나도 재고와 기록이 맞는다. 단 화면 오른쪽 남은 개수는 RESULT가 뜬 뒤에 줄인다(연출 중에 줄면 어떤 경품인지 미리 보인다).

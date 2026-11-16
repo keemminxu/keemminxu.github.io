@@ -66,10 +66,11 @@ test('undoLast: 기록 삭제 + 재고 복구', () => {
 
 test('purgePersonal: 개인정보만 지우고 시각·경품은 남긴다', () => {
   const s = createStore({ storage: memStorage(), search: '?bag=2' });
-  s.commitDraw('bag', { name: '가', phone: '010-1234-5678', birth: '19990101' });
+  s.commitDraw('bag', { name: '가', phone: '010-1234-5678', birth: '19990101', gender: '남' });
+  assert.equal(s.state.draws[0].gender, '남');
   s.purgePersonal();
   const r = s.state.draws[0];
-  assert.deepEqual([r.name, r.phone, r.birth, r.prize], ['', '', '', 'bag']);
+  assert.deepEqual([r.name, r.phone, r.birth, r.gender, r.prize], ['', '', '', '', 'bag']);
   assert.ok(r.at);
 });
 
@@ -110,13 +111,14 @@ test('normalize: 빠진 키 보충, 알 수 없는 경품 기록 제거', () => 
 test('toCSV: BOM, 헤더, 라벨, 이스케이프, 수식 주입 방지', () => {
   const st = normalize({});
   st.draws = [
-    { no: 1, at: 't1', prize: 'cup', name: '김,민수', phone: '', birth: '' },
-    { no: 2, at: 't2', prize: 'bag', name: '=1+1', phone: '"x"', birth: '' },
+    { no: 1, at: 't1', prize: 'cup', name: '김,민수', phone: '', birth: '' }, // 성별 생기기 전 기록
+    { no: 2, at: 't2', prize: 'bag', name: '=1+1', phone: '"x"', birth: '', gender: '여' },
   ];
   const csv = toCSV(st);
-  assert.ok(csv.startsWith('\uFEFF순번,시각,경품,이름,휴대폰,생년월일\r\n'));
-  assert.ok(csv.includes('1,t1,컵,"김,민수",,'));
-  assert.ok(csv.includes("2,t2,장바구니,'=1+1,\"\"\"x\"\"\","));
+  assert.ok(csv.startsWith('\uFEFF순번,시각,경품,이름,휴대폰,생년월일,성별\r\n'));
+  assert.ok(csv.includes('1,t1,컵,"김,민수",,,\r\n'));
+  assert.ok(csv.includes("2,t2,장바구니,'=1+1,\"\"\"x\"\"\",,여\r\n"));
+  assert.equal(normalize({}).settings.fields.gender, false, '성별 수집은 기본 꺼짐');
 });
 
 test('showStock: 기본은 표시, 끄면 저장된다(옛 저장본에도 기본값 보충)', () => {
