@@ -65,8 +65,9 @@ export function createSfx() {
     },
     unlock() { ensure(); },
     click() { tone({ type: 'square', f0: 1800, f1: 900, dur: 0.035, vol: 0.12 }); noise({ dur: 0.03, vol: 0.15, freq: 3000 }); },
+    // 캡슐이 굴러 내려가는 소리. 대역을 좁히면(Q↑) 음량이 같이 깎여서 Q는 낮게, vol은 높게 둔다(딸깍과 비슷한 크기).
     roll(dur = 1.2) {
-      for (let i = 0; i < 8; i++) noise({ t: (i * dur) / 8, dur: 0.09, vol: 0.18, freq: 500 + Math.random() * 400, q: 3 });
+      for (let i = 0; i < 8; i++) noise({ t: (i * dur) / 8, dur: 0.09, vol: 0.8, freq: 500 + Math.random() * 400, q: 1.2 });
     },
     thunk() { tone({ f0: 160, f1: 60, dur: 0.18, vol: 0.5 }); noise({ dur: 0.06, vol: 0.2, freq: 400 }); },
     tick() { tone({ type: 'triangle', f0: 900, dur: 0.025, vol: 0.12 }); },
