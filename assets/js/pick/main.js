@@ -36,14 +36,11 @@ const ui = createUI({
     onPrimary() {
       sfx.unlock();
       if (!store.ok) { ui.toast('기록을 저장할 수 없어 뽑기를 잠가 두었어요'); return; }
-      if (phase === 'locked') {
-        if (anyField(store.state.settings.fields)) setPhase('entry');
-        else { entry = {}; setPhase('ready'); }
-      } else if (phase === 'ready') {
-        turnByButton();
-      }
+      if (phase !== 'locked') return;
+      if (anyField(store.state.settings.fields)) setPhase('entry');
+      else { entry = {}; startDraw(); }
     },
-    onEnter(value) { entry = value; setPhase('ready'); },
+    onEnter(value) { entry = value; startDraw(); },
     onCancelEntry() { setPhase('locked'); },
     onNext() { next(); },
     onAdminChanged() {
@@ -79,7 +76,9 @@ function showResult(rec) {
   setPhase('result');
 }
 
-function turnByButton() {
+// 버튼 한 번으로 바로 뽑는다: 손잡이가 저절로 한 바퀴 돌고(3D) 끝나면 doDraw
+function startDraw() {
+  setPhase('ready');
   if (stage) stage.autoTurn();
   else doDraw();
 }
@@ -116,7 +115,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key !== ' ' && e.key !== 'Enter') return;
   const t = e.target;
   if (t && t.closest && t.closest('input, textarea, select, .ov, .admin')) return; // 입력·오버레이·관리자에서는 기본 동작
-  if (phase === 'ready') { e.preventDefault(); sfx.unlock(); turnByButton(); }
+  if (phase === 'locked') { e.preventDefault(); ui.pressPrimary(); }
   else if (phase === 'result') { e.preventDefault(); next(); }
 });
 

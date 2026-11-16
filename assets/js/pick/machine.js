@@ -60,10 +60,10 @@ export function buildMachine(scene) {
   part(new THREE.CylinderGeometry(0.3, 0.34, 0.18, 32), PAL.green700, new THREE.Vector3(0, DOME.center.y + DOME.radius + 0.02, 0));
   part(new THREE.SphereGeometry(0.11, 24, 16), PAL.pink, new THREE.Vector3(0, DOME.center.y + DOME.radius + 0.17, 0));
 
-  // 툰 유리 돔(캡슐보다 나중에 그린다)
+  // 툰 유리 돔. renderOrder를 올리지 않는다: 올리면 앞에 있는 개봉 이펙트·어둡게 하는 판보다
+  // 나중에 그려져 하이라이트 띠가 이펙트를 덮는다. 기본값이면 투명 물체끼리 거리순(먼 것 먼저)으로 그린다.
   const dome = new THREE.Mesh(new THREE.SphereGeometry(DOME.radius, 64, 48), toonGlass());
   dome.position.copy(DOME.center);
-  dome.renderOrder = 2;
   group.add(dome);
 
   // 앞판 도장 스티커(살짝 기울임) + 잉크 그림자

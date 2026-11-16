@@ -4,7 +4,7 @@ import { PRIZE_KEYS } from './draw.js';
 
 const $ = (id) => document.getElementById(id);
 const ACCENT = { towel: 'pink', cup: 'orange', bag: 'yellow' };
-const AUTO_NEXT_SEC = 20;
+const THUMB = (k) => new URL(`../../images/eunkk-pick/thumb-${k}.png`, import.meta.url).href;
 
 // 미러링 화면에 띄우는 관리자 기록용 가리기(CSV에는 원본)
 export const maskName = (s) => {
@@ -22,20 +22,13 @@ const FIELD_DEFS = [
 ];
 
 export function createUI({ store, handlers }) {
-  let countdown = null, toastTimer = null, adminEnabled = true;
+  let toastTimer = null, adminEnabled = true;
 
   // ---------- HUD ----------
+  // 왼쪽 위는 로고 스티커. 제목 설정은 탭 제목과 로고 대체 텍스트에만 쓴다.
   function renderTitle() {
     const t = store.state.settings.title || '은크크 Pick';
-    const h = $('brandTitle');
-    h.textContent = '';
-    if (t.endsWith('Pick')) {
-      const b = document.createElement('b');
-      b.textContent = 'Pick';
-      h.append(t.slice(0, -4), b);
-    } else {
-      h.textContent = t;
-    }
+    $('brandLogo').alt = t;
     document.title = t;
   }
 
@@ -46,10 +39,12 @@ export function createUI({ store, handlers }) {
         const card = document.createElement('div');
         card.className = 'card ' + ACCENT[k];
         card.dataset.k = k;
-        card.innerHTML = '<span class="label"></span><span class="num"></span><span class="unit">개 남음</span><span class="bar"><i></i></span>';
+        card.innerHTML = '<img class="thumb" alt=""><span class="label"></span><span class="num"></span><span class="unit">개 남음</span><span class="bar"><i></i></span>';
+        card.querySelector('.thumb').src = THUMB(k);
         box.append(card);
       }
     }
+    box.classList.toggle('no-count', !store.state.settings.showStock);
     for (const card of box.children) {
       const s = store.state.stock[card.dataset.k];
       card.querySelector('.label').textContent = s.label;
@@ -60,39 +55,19 @@ export function createUI({ store, handlers }) {
   }
 
   // ---------- 화면 전환 ----------
-  function stopCountdown() {
-    if (countdown) { clearInterval(countdown); countdown = null; }
-    $('nextCount').textContent = '';
-  }
-
-  function startCountdown(sec) {
-    let n = sec;
-    $('nextCount').textContent = `(${n})`;
-    countdown = setInterval(() => {
-      n -= 1;
-      if (n <= 0) { stopCountdown(); handlers.onNext(); }
-      else $('nextCount').textContent = `(${n})`;
-    }, 1000);
-  }
-
+  // ready는 손잡이가 자동으로 도는 짧은 순간이라 버튼을 숨긴다. 결과는 "다음"을 누를 때까지 그대로 둔다.
   function setScreen(name, data) {
-    stopCountdown();
     // 숨겨지는 버튼에 포커스가 남으면 스페이스·엔터가 먹히지 않는다
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
     document.body.dataset.screen = name;
     $('loading').hidden = name !== 'boot';
-    $('action').hidden = !(name === 'locked' || name === 'ready');
+    $('action').hidden = name !== 'locked';
     $('result').hidden = name !== 'result';
     $('entryOv').hidden = name !== 'entry';
     $('soldoutOv').hidden = name !== 'soldout';
     $('setupOv').hidden = name !== 'setup';
-    const no3d = document.body.classList.contains('no3d');
     if (name === 'locked') {
-      $('hint').textContent = '부스에서 영수증을 확인받아 주세요';
-      $('primaryBtn').textContent = anyField(store.state.settings.fields) ? '참가하기' : '영수증 확인 완료';
-    } else if (name === 'ready') {
-      $('hint').textContent = no3d ? '버튼을 눌러 뽑아 주세요' : '손잡이를 시계 방향으로 돌려 주세요 · 드래그 / 스크롤 / 스페이스';
-      $('primaryBtn').textContent = no3d ? '뽑기' : '대신 돌려 주기';
+      $('primaryBtn').textContent = anyField(store.state.settings.fields) ? '참가하기' : '굿즈 뽑기';
     } else if (name === 'entry') {
       openEntry();
     } else if (name === 'result') {
@@ -101,7 +76,6 @@ export function createUI({ store, handlers }) {
       card.classList.remove('stamp');
       void card.offsetWidth; // 애니메이션 재시작
       card.classList.add('stamp');
-      startCountdown(AUTO_NEXT_SEC);
     }
   }
 
@@ -224,6 +198,7 @@ export function createUI({ store, handlers }) {
     $('aTitle').value = s.title;
     $('aPin').value = '';
     $('aSound').checked = s.sound;
+    $('aShowStock').checked = s.showStock;
     $('fName').checked = s.fields.name;
     $('fPhone').checked = s.fields.phone;
     $('fBirth').checked = s.fields.birth;
@@ -266,7 +241,7 @@ export function createUI({ store, handlers }) {
       $('adminErr').textContent = '정보를 수집하려면 수집 주체·목적·보유 기간을 입력해 주세요.';
       return;
     }
-    store.updateSettings({ title: $('aTitle').value.trim() || '은크크 Pick', sound: $('aSound').checked, fields, consent, ...(pin ? { pin } : {}) });
+    store.updateSettings({ title: $('aTitle').value.trim() || '은크크 Pick', sound: $('aSound').checked, showStock: $('aShowStock').checked, fields, consent, ...(pin ? { pin } : {}) });
     const vals = {};
     for (const inp of $('stockEdit').querySelectorAll('input')) (vals[inp.dataset.k] ||= {})[inp.dataset.f] = inp.value;
     for (const k of PRIZE_KEYS) store.setStock(k, vals[k].total, vals[k].left);
@@ -357,6 +332,7 @@ export function createUI({ store, handlers }) {
 
   return {
     impact,
+    pressPrimary() { handlers.onPrimary(); },
     renderTitle,
     renderStock,
     setScreen,

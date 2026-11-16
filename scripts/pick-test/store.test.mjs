@@ -118,3 +118,11 @@ test('toCSV: BOM, 헤더, 라벨, 이스케이프, 수식 주입 방지', () => 
   assert.ok(csv.includes('1,t1,컵,"김,민수",,'));
   assert.ok(csv.includes("2,t2,장바구니,'=1+1,\"\"\"x\"\"\","));
 });
+
+test('showStock: 기본은 표시, 끄면 저장된다(옛 저장본에도 기본값 보충)', () => {
+  assert.equal(normalize({}).settings.showStock, true);
+  const storage = memStorage();
+  const s = createStore({ storage, search: '?cup=1' });
+  s.updateSettings({ showStock: false });
+  assert.equal(createStore({ storage }).state.settings.showStock, false);
+});

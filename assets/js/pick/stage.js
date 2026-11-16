@@ -42,7 +42,6 @@ function toonify(root, tune) {
     if (tune.glass) {
       if (map) m.add(inkDecal(m));
       m.material = toonGlass({ side: THREE.DoubleSide, alpha: 0.1, edge: [0.6, 0.7] });
-      m.renderOrder = 3;
     } else {
       m.material = new THREE.MeshToonMaterial({ map, gradientMap: toonRamp('prize'), side: THREE.DoubleSide });
       m.material.color.setScalar(tune.bright || 1); // 실내광에 회색으로 찍힌 흰 천을 흰색으로
@@ -370,7 +369,7 @@ export async function createStage({ canvas, sfx, prizes, onTurnComplete, onImpac
       tw.fn(tw.ease(tw.t / tw.duration), dt);
       if (tw.t >= tw.duration) { tweens.delete(tw); tw.resolve(); }
     }
-    if (auto) addTurn((dt * TURN) / 1.3);
+    if (auto) addTurn((dt * TURN) / 0.9); // 버튼 한 번에 0.9초 동안 저절로 한 바퀴
     if (mode !== 'busy') {
       idleStir += dt;
       if (idleStir > 5) { idleStir = 0; capsules.stir(0.06); } // 대기 중 가볍게 출렁

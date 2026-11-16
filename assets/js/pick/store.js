@@ -11,6 +11,7 @@ export function defaultState() {
       fields: { name: false, phone: false, birth: false },
       consent: { org: '', purpose: '', retention: '', contact: '' },
       sound: true,
+      showStock: true, // 화면 오른쪽 남은 개수 표시
     },
     stock: {
       towel: { label: '수건', total: 0, left: 0 },
