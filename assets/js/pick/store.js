@@ -110,13 +110,18 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
   const emit = () => listeners.forEach((fn) => fn(state));
 
   const seed = parseSeed(search);
-  const saved = load();
+  const loaded = load();
+  // 예전 버전은 재고를 0개로 저장했다: 총수량이 모두 0이고 기록도 없으면 아직 설정 전으로 보고
+  // 기본값(또는 주소 수량)으로 채운다. 비밀번호·수집 항목 같은 설정은 유지한다.
+  const unconfigured = loaded && loaded.draws.length === 0 && PRIZE_KEYS.every((k) => loaded.stock[k].total === 0);
+  const saved = unconfigured ? null : loaded;
   let state;
   let seededFromUrl = false;
   if (saved) {
     state = saved;
   } else {
     state = defaultState();
+    if (loaded) state.settings = loaded.settings;
     if (seed) {
       for (const k of PRIZE_KEYS) { state.stock[k].total = seed[k]; state.stock[k].left = seed[k]; }
       seededFromUrl = true;

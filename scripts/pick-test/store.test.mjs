@@ -133,3 +133,22 @@ test('저장본도 주소 수량도 없으면 경품마다 100개로 시작한�
   for (const k of ['towel', 'cup', 'bag']) assert.deepEqual([s.state.stock[k].total, s.state.stock[k].left], [100, 100]);
   assert.equal(s.totalLeft(), 300);
 });
+
+test('예전 버전이 0개로 저장한 빈 저장본은 기본 100개로 채우고 설정은 유지한다', () => {
+  const storage = memStorage();
+  const old = normalize({ settings: { pin: '4321' } }); // 재고 0, 기록 없음
+  storage.setItem(STORAGE_KEY, JSON.stringify(old));
+  const s = createStore({ storage });
+  assert.equal(s.state.stock.cup.left, 100);
+  assert.equal(s.state.settings.pin, '4321');
+  assert.equal(s.ignoredSeed, false);
+  // 주소 수량이 있으면 그걸로 채운다
+  const storage2 = memStorage();
+  storage2.setItem(STORAGE_KEY, JSON.stringify(old));
+  assert.equal(createStore({ storage: storage2, search: '?cup=7' }).state.stock.cup.left, 7);
+  // 기록이 있는 저장본은 0개여도 건드리지 않는다(소진 상태 유지)
+  const storage3 = memStorage();
+  const used = normalize({ stock: { cup: { total: 1, left: 0 } }, draws: [{ no: 1, at: 't', prize: 'cup' }] });
+  storage3.setItem(STORAGE_KEY, JSON.stringify(used));
+  assert.equal(createStore({ storage: storage3 }).totalLeft(), 0);
+});
