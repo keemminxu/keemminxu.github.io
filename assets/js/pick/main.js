@@ -74,6 +74,7 @@ function showResult(rec) {
   store.markShown(rec.no);
   lastShown = rec;
   setPhase('result');
+  ui.renderStock(); // 결과가 뜬 뒤에야 남은 개수를 줄인다
 }
 
 // 버튼 한 번으로 바로 뽑는다: 손잡이가 저절로 한 바퀴 돌고(3D) 끝나면 doDraw
@@ -105,9 +106,12 @@ async function doDraw() {
   showResult(rec);
 }
 
+// 결과는 연출 전에 저장되므로(새로 고침 복구용) 뽑는 동안 남은 개수를 바로 그리면 어떤 경품인지 미리 보인다.
+// 손잡이가 돌고 캡슐이 열리는 동안(ready·busy)에는 화면을 그대로 두고, showResult에서 갱신한다.
 store.onChange(() => {
+  if (phase === 'ready' || phase === 'busy') return;
   ui.renderStock();
-  if (stage && phase !== 'busy') stage.setCapsuleCount(visibleCount());
+  if (stage) stage.setCapsuleCount(visibleCount());
 });
 
 window.addEventListener('keydown', (e) => {

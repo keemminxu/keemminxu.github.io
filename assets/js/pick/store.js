@@ -3,6 +3,9 @@ import { PRIZE_KEYS, totalLeft } from './draw.js';
 
 export const STORAGE_KEY = 'eunkk-pick-v1';
 
+// 저장본도 주소 수량도 없을 때의 경품별 수량(관리자 화면에서 바꾼다)
+export const DEFAULT_STOCK = 100;
+
 export function defaultState() {
   return {
     settings: {
@@ -14,9 +17,9 @@ export function defaultState() {
       showStock: true, // 화면 오른쪽 남은 개수 표시
     },
     stock: {
-      towel: { label: '수건', total: 0, left: 0 },
-      cup: { label: '컵', total: 0, left: 0 },
-      bag: { label: '장바구니', total: 0, left: 0 },
+      towel: { label: '수건', total: DEFAULT_STOCK, left: DEFAULT_STOCK },
+      cup: { label: '컵', total: DEFAULT_STOCK, left: DEFAULT_STOCK },
+      bag: { label: '장바구니', total: DEFAULT_STOCK, left: DEFAULT_STOCK },
     },
     draws: [],
   };

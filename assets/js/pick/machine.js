@@ -1,4 +1,4 @@
-// 가챠 머신 — 기본 도형 + 툰(셀 셰이딩·잉크 외곽선). 앞판에 포스터의 은크크Pick 도장.
+// 가챠 머신 — 기본 도형 + 툰(셀 셰이딩·잉크 외곽선). 앞판에 은크크 개미 스티커.
 import * as THREE from 'three';
 import { PAL, INK, toonMat, inkHull, toonGlass } from './toon.js';
 
@@ -8,7 +8,7 @@ export const HANDLE_POS = new THREE.Vector3(0.52, 0.46, 0.74);
 export const EXIT_POS = new THREE.Vector3(-0.52, 0.42, 0.73);
 export const TRAY_POS = new THREE.Vector3(-0.52, 0.14, 0.95);
 
-const STAMP_URL = new URL('../../images/eunkk-pick/stamp.png', import.meta.url).href;
+const STICKER_URL = new URL('../../images/eunkk-pick/ant.png', import.meta.url).href;
 
 function roundedRectShape(w, h, r) {
   const s = new THREE.Shape();
@@ -66,18 +66,23 @@ export function buildMachine(scene) {
   dome.position.copy(DOME.center);
   group.add(dome);
 
-  // 앞판 도장 스티커(살짝 기울임) + 잉크 그림자
-  const stampTex = new THREE.TextureLoader().load(STAMP_URL);
-  stampTex.colorSpace = THREE.SRGBColorSpace;
-  stampTex.anisotropy = 4;
-  const stampGeo = new THREE.PlaneGeometry(0.6, 0.59);
-  const stamp = new THREE.Mesh(stampGeo, new THREE.MeshBasicMaterial({ map: stampTex, transparent: true, alphaTest: 0.5 }));
-  const stampShadow = new THREE.Mesh(stampGeo, new THREE.MeshBasicMaterial({ color: INK, alphaMap: stampTex, transparent: true, alphaTest: 0.5 }));
-  stamp.position.set(0, 0.8, 0.735);
-  stamp.rotation.z = 0.06;
-  stampShadow.position.set(0.025, 0.775, 0.732);
-  stampShadow.rotation.z = 0.06;
-  group.add(stampShadow, stamp);
+  // 앞판 개미 스티커(다이컷, 살짝 기울임) + 잉크 그림자
+  const stickerTex = new THREE.TextureLoader().load(STICKER_URL);
+  stickerTex.colorSpace = THREE.SRGBColorSpace;
+  stickerTex.anisotropy = 4;
+  const stickerGeo = new THREE.PlaneGeometry(0.58, 0.58);
+  const sticker = new THREE.Mesh(stickerGeo, new THREE.MeshBasicMaterial({ map: stickerTex, transparent: true, alphaTest: 0.5 }));
+  // 그림자는 스티커의 알파 모양만 쓰고 색은 잉크로 칠한다(alphaMap은 초록 채널을 읽어서 안쪽 잉크 선이 구멍이 된다)
+  const shadowMat = new THREE.MeshBasicMaterial({ color: INK, map: stickerTex, transparent: true, alphaTest: 0.5 });
+  shadowMat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#ifdef USE_MAP\n\tdiffuseColor.a *= texture2D( map, vMapUv ).a;\n#endif');
+  };
+  const stickerShadow = new THREE.Mesh(stickerGeo, shadowMat);
+  sticker.position.set(0, 0.82, 0.735);
+  sticker.rotation.z = 0.06;
+  stickerShadow.position.set(0.025, 0.795, 0.732);
+  stickerShadow.rotation.z = 0.06;
+  group.add(stickerShadow, sticker);
 
   // 손잡이: 받침판 + 시계 방향으로 도는 원판·막대
   const bezel = part(new THREE.CylinderGeometry(0.25, 0.25, 0.03, 48), PAL.green900, HANDLE_POS.clone().setZ(HANDLE_POS.z - 0.015));

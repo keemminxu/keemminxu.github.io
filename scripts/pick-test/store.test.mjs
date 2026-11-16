@@ -82,7 +82,7 @@ test('resetAll: 기록 삭제 + left=total', () => {
 });
 
 test('setStock: 남은 수량이 총수량보다 크면 총수량을 올린다', () => {
-  const s = createStore({ storage: memStorage() });
+  const s = createStore({ storage: memStorage(), search: '?cup=0' }); // 다른 경품 0개로 시작
   s.setStock('cup', 5, 8);
   assert.deepEqual([s.state.stock.cup.total, s.state.stock.cup.left], [8, 8]);
   assert.equal(s.totalStock(), 8);
@@ -125,4 +125,11 @@ test('showStock: 기본은 표시, 끄면 저장된다(옛 저장본에도 기�
   const s = createStore({ storage, search: '?cup=1' });
   s.updateSettings({ showStock: false });
   assert.equal(createStore({ storage }).state.settings.showStock, false);
+});
+
+test('저장본도 주소 수량도 없으면 경품마다 100개로 시작한다', () => {
+  const s = createStore({ storage: memStorage(), search: '' });
+  assert.equal(s.seededFromUrl, false);
+  for (const k of ['towel', 'cup', 'bag']) assert.deepEqual([s.state.stock[k].total, s.state.stock[k].left], [100, 100]);
+  assert.equal(s.totalLeft(), 300);
 });
