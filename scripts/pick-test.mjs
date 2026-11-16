@@ -2,6 +2,7 @@
 import './pick-test/draw.test.mjs';
 import './pick-test/entry.test.mjs';
 import './pick-test/store.test.mjs';
+import './pick-test/physics.test.mjs';
 import { summary } from './pick-test/harness.mjs';
 
 summary();
