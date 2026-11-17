@@ -1,4 +1,6 @@
 // 참가자 입력 검사·정규화 — DOM 의존 없음
+import { CONSENT_KEYS } from './consent.js';
+
 export const digits = (s) => String(s ?? '').replace(/\D/g, '');
 
 export const GENDERS = ['남', '여'];
@@ -18,14 +20,24 @@ export function isValidPhone(s) {
   return /^01[016789]\d{7,8}$/.test(digits(s));
 }
 
-export function isValidBirth(s, today = new Date()) {
-  const d = digits(s);
-  if (d.length !== 8) return false;
-  const y = +d.slice(0, 4), m = +d.slice(4, 6), day = +d.slice(6, 8);
+function realDate(y, m, day, today) {
   if (y < 1900 || y > today.getFullYear()) return false;
   const dt = new Date(y, m - 1, day);
   return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day && dt <= today;
 }
+
+// 생년월일 → 'YYYYMMDD'(틀리면 ''). 화면은 6자리(990101)로 받는다: 2000년대로 봐서 미래 날짜면 1900년대.
+// CSV에는 8자리로 남긴다(엑셀이 050101의 앞자리 0을 지우지 않게, 연령 확인도 바로 되게). 8자리 입력도 받는다.
+export function parseBirth(s, today = new Date()) {
+  const d = digits(s);
+  if (d.length === 8) return realDate(+d.slice(0, 4), +d.slice(4, 6), +d.slice(6, 8), today) ? d : '';
+  if (d.length !== 6) return '';
+  const yy = +d.slice(0, 2), m = +d.slice(2, 4), day = +d.slice(4, 6);
+  for (const y of [2000 + yy, 1900 + yy]) if (realDate(y, m, day, today)) return String(y) + d.slice(2);
+  return '';
+}
+
+export const isValidBirth = (s, today = new Date()) => parseBirth(s, today) !== '';
 
 // 관리자 기록 표(미러링 화면)용 끝자리
 export const lastDigits = (s, n = 4) => digits(s).slice(-n);
@@ -63,13 +75,16 @@ export function validateEntry(fields, input, today = new Date()) {
     else value.phone = formatPhone(input.phone);
   }
   if (fields.birth) {
-    if (!isValidBirth(input.birth, today)) errors.birth = '생년월일 8자리를 확인해 주세요. (예: 19990101)';
-    else value.birth = digits(input.birth);
+    const birth = parseBirth(input.birth, today);
+    if (!birth) errors.birth = '생년월일 6자리를 확인해 주세요. (예: 990101)';
+    else value.birth = birth;
   }
   if (fields.gender) {
     if (!GENDERS.includes(input.gender)) errors.gender = '성별을 골라 주세요.';
     else value.gender = input.gender;
   }
-  if (anyField(fields) && !input.consent) errors.consent = '개인정보 수집·이용에 동의해야 참여할 수 있어요.';
+  // consent: { collect, share, photo } — 동의서 필수 세 항목 모두
+  const agreed = input.consent && CONSENT_KEYS.every((k) => input.consent[k] === true);
+  if (anyField(fields) && !agreed) errors.consent = '필수 동의 세 항목에 모두 체크해야 참여할 수 있어요.';
   return { ok: Object.keys(errors).length === 0, errors, value };
 }

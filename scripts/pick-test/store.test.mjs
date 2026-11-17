@@ -94,10 +94,10 @@ test('onChange: 변경 시 호출', () => {
   let calls = 0;
   s.onChange(() => calls++);
   s.commitDraw('cup');
-  s.updateSettings({ fields: { phone: true } });
+  s.updateSettings({ fields: { phone: false } });
   assert.equal(calls, 2);
-  assert.equal(s.state.settings.fields.phone, true);
-  assert.equal(s.state.settings.fields.name, false, '중첩 객체는 병합');
+  assert.equal(s.state.settings.fields.phone, false);
+  assert.equal(s.state.settings.fields.name, true, '중첩 객체는 병합');
 });
 
 test('normalize: 빠진 키 보충, 알 수 없는 경품 기록 제거', () => {
@@ -118,7 +118,28 @@ test('toCSV: BOM, 헤더, 라벨, 이스케이프, 수식 주입 방지', () => 
   assert.ok(csv.startsWith('\uFEFF순번,시각,경품,이름,휴대폰,생년월일,성별\r\n'));
   assert.ok(csv.includes('1,t1,컵,"김,민수",,,\r\n'));
   assert.ok(csv.includes("2,t2,장바구니,'=1+1,\"\"\"x\"\"\",,여\r\n"));
-  assert.equal(normalize({}).settings.fields.gender, false, '성별 수집은 기본 꺼짐');
+});
+
+test('수집 항목은 기본으로 모두 켜짐, 옛 저장본은 한 번만 새 기본값으로 바꾼다', () => {
+  assert.deepEqual(normalize({}).settings.fields, { name: true, phone: true, birth: true, gender: true });
+  assert.equal(normalize({}).settings.consent, undefined, '옛 동의 문구 입력값은 버린다');
+  // 버전 없는 옛 저장본(전부 꺼짐 + 옛 동의 문구) → 모두 켜고 바로 저장
+  const storage = memStorage();
+  storage.setItem(STORAGE_KEY, JSON.stringify({
+    settings: { pin: '4321', fields: { name: false, phone: false, birth: false, gender: false }, consent: { org: '312' } },
+    stock: { cup: { total: 5, left: 4 } },
+    draws: [{ no: 1, at: 't', prize: 'cup', shown: true }],
+  }));
+  const s = createStore({ storage });
+  assert.deepEqual(s.state.settings.fields, { name: true, phone: true, birth: true, gender: true });
+  assert.equal(s.state.settings.pin, '4321', '다른 설정은 유지');
+  assert.equal(s.state.stock.cup.left, 4, '재고·기록은 유지');
+  const raw = JSON.parse(storage.getItem(STORAGE_KEY));
+  assert.equal(raw.settings.formVersion, 2);
+  assert.equal(raw.settings.fields.name, true);
+  // 새 버전에서 관리자가 끈 항목은 다시 켜지지 않는다
+  s.updateSettings({ fields: { gender: false } });
+  assert.equal(createStore({ storage }).state.settings.fields.gender, false);
 });
 
 test('showStock: 기본은 표시, 끄면 저장된다(옛 저장본에도 기본값 보충)', () => {

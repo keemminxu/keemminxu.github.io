@@ -128,8 +128,38 @@ sitemap: false
   }
   .choice input:checked + span { background: var(--green-700); color: var(--cream); }
   .choice input:focus-visible + span { outline: 3px solid var(--orange); outline-offset: 2px; }
-  .consent { background: #efe7cf; border: 2px dashed var(--ink); border-radius: 12px; padding: 12px 16px; margin: 8px 0 16px; }
+  /* 이름·휴대폰 / 생년월일·성별 두 줄: 동의서까지 한 화면에 들어오게 */
+  #entryFields { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  @media (max-width: 600px) { #entryFields { grid-template-columns: 1fr; } }
+  .consent { background: #efe7cf; border: 2px dashed var(--ink); border-radius: 12px; padding: 12px 16px; margin: 0 0 12px; }
   .consent p { margin: 0 0 8px; font-size: 0.95rem; }
+  /* 동의서 원문 스크롤 상자 */
+  .consent-doc {
+    max-height: clamp(130px, 24vh, 240px); overflow-y: auto; background: #fff; border: 2px solid var(--ink); border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 12px; font-size: 0.88rem; line-height: 1.55;
+  }
+  .consent-doc:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .consent-doc p { margin: 0 0 4px; font-size: inherit; line-height: inherit; }
+  .consent-doc .doc-title { font-weight: 800; text-align: center; margin-bottom: 6px; }
+  .consent-doc .doc-sec { font-weight: 800; margin-top: 10px; }
+  .consent-doc ul { margin: 0; padding-left: 1.4em; list-style: '○ '; }
+  .consent-doc li { margin-bottom: 2px; }
+  .consent .check.all { font-size: 1.05rem; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 2px dashed rgba(20, 35, 26, 0.35); }
+  .consent-checks { display: grid; gap: 6px; }
+  .consent-checks .check { font-weight: 700; }
+  /* 높이가 낮은 화면(1366×768, 배율 큰 노트북): 간격을 줄여 "뽑으러 가기"까지 한 화면에 */
+  @media (max-height: 860px) {
+    #entryForm.panel { padding: 18px 28px; }
+    #entryForm h2 { margin-bottom: 8px; font-size: 1.6rem; }
+    #entryForm .field { margin-bottom: 4px; gap: 4px; }
+    #entryForm .field input:not([type=radio]), #entryForm .choice span { padding: 7px 12px; }
+    #entryForm .consent { padding: 10px 14px; }
+    #entryForm .consent-doc { max-height: 17vh; margin-bottom: 8px; }
+    #entryForm .consent .check.all { padding-bottom: 4px; margin-bottom: 4px; }
+    #entryForm .consent-checks { gap: 2px; }
+    #entryForm .row-btns { margin-top: 4px; }
+  }
+  .admin-note { margin: 4px 0 8px; font-size: 0.9rem; opacity: 0.75; }
   .check { display: flex; gap: 8px; align-items: center; font-weight: 800; cursor: pointer; }
   .check input { width: 22px; height: 22px; accent-color: var(--green-700); }
   .err { color: var(--red); font-size: 0.95rem; margin: 4px 0 0; min-height: 1.1em; font-weight: 700; }
@@ -183,11 +213,11 @@ sitemap: false
     <h2>참가자 정보</h2>
     <div id="entryFields"></div>
     <div class="consent">
-      <p id="consentText"></p>
-      <label class="check"><input type="checkbox" id="consentChk"> 개인정보 수집·이용에 동의해요</label>
+      <div class="consent-doc" id="consentDoc" tabindex="0" role="document" aria-label="개인정보활용동의서"></div>
+      <label class="check all"><input type="checkbox" id="consentAll"> 위 내용에 모두 동의해요</label>
+      <div class="consent-checks" id="consentChecks"></div>
       <p class="err" data-err="consent"></p>
     </div>
-    <p class="err" id="consentMissing" hidden>관리자 화면에서 개인정보 동의 문구(수집 주체·목적·보유 기간)를 먼저 입력해 주세요.</p>
     <div class="row-btns">
       <button type="button" class="btn-ghost" id="entryCancel">취소</button>
       <button type="submit" class="btn-primary" id="entrySubmit">뽑으러 가기</button>
@@ -241,10 +271,7 @@ sitemap: false
   <label class="check"><input type="checkbox" id="fPhone"> 휴대폰</label>
   <label class="check"><input type="checkbox" id="fBirth"> 생년월일</label>
   <label class="check"><input type="checkbox" id="fGender"> 성별 (남·여)</label>
-  <label>수집 주체 <input id="cOrg"></label>
-  <label>수집 목적 <input id="cPurpose"></label>
-  <label>보유 기간 <input id="cRetention"></label>
-  <label>문의처 <input id="cContact"></label>
+  <p class="admin-note">하나라도 켜면 참가자 화면에 개인정보활용동의서(필수 3항목)가 나와요.</p>
   <p class="err" id="adminErr"></p>
   <button class="btn-primary wide" id="adminSave" type="button">저장</button>
   <h3>기록 <span id="drawCount"></span></h3>

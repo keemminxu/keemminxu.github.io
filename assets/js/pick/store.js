@@ -6,13 +6,17 @@ export const STORAGE_KEY = 'eunkk-pick-v1';
 // 저장본도 주소 수량도 없을 때의 경품별 수량(관리자 화면에서 바꾼다)
 export const DEFAULT_STOCK = 100;
 
+// 참가자 입력 양식 버전. 2: 이름·휴대폰·생년월일·성별 기본 수집 + 고정 동의서(consent.js).
+// 이보다 옛 저장본은 처음 열 때 한 번 수집 항목을 새 기본값으로 바꾼다.
+export const FORM_VERSION = 2;
+
 export function defaultState() {
   return {
     settings: {
       title: '은크크 Pick',
       pin: '0000', // 실수 방지용. 보안 장치 아님
-      fields: { name: false, phone: false, birth: false, gender: false },
-      consent: { org: '', purpose: '', retention: '', contact: '' },
+      fields: { name: true, phone: true, birth: true, gender: true },
+      formVersion: FORM_VERSION,
       sound: true,
       showStock: true, // 화면 오른쪽 남은 개수 표시
     },
@@ -47,9 +51,11 @@ export function parseSeed(search) {
 export function normalize(d) {
   const def = defaultState();
   const s = d && typeof d === 'object' ? d : {};
-  const settings = { ...def.settings, ...(s.settings || {}) };
-  settings.fields = { ...def.settings.fields, ...((s.settings && s.settings.fields) || {}) };
-  settings.consent = { ...def.settings.consent, ...((s.settings && s.settings.consent) || {}) };
+  const old = s.settings || {};
+  const current = old.formVersion >= FORM_VERSION;
+  const settings = { ...def.settings, ...old, formVersion: FORM_VERSION };
+  settings.fields = { ...def.settings.fields, ...((current && old.fields) || {}) };
+  delete settings.consent; // 옛 버전의 동의 문구 입력값(수집 주체·목적…)은 고정 동의서로 바뀌었다
   const stock = {};
   for (const k of PRIZE_KEYS) {
     const src = (s.stock && s.stock[k]) || {};
@@ -86,11 +92,15 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
   const listeners = new Set();
   let ok = true;
 
+  let migrated = false;
   function load() {
     if (!storage) return null;
     try {
       const raw = storage.getItem(STORAGE_KEY);
-      return raw ? normalize(JSON.parse(raw)) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      migrated = !(parsed && parsed.settings && parsed.settings.formVersion >= FORM_VERSION);
+      return normalize(parsed);
     } catch (e) {
       return null;
     }
@@ -119,6 +129,7 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
   let seededFromUrl = false;
   if (saved) {
     state = saved;
+    if (migrated) save(); // 새 기본 수집 항목을 한 번만 적용(이후 관리자가 끈 항목은 그대로)
   } else {
     state = defaultState();
     if (loaded) state.settings = loaded.settings;
@@ -209,7 +220,6 @@ export function createStore({ storage, search = '', now = () => new Date() } = {
         ...cur,
         ...patch,
         fields: { ...cur.fields, ...(patch.fields || {}) },
-        consent: { ...cur.consent, ...(patch.consent || {}) },
       };
       save(); emit();
     },

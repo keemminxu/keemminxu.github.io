@@ -1,5 +1,6 @@
 // 화면(DOM) — HUD, 정보 입력, 결과, 오버레이, 관리자 패널
 import { anyField, validateEntry, lastDigits, maskPhoneInput, editDigits, GENDERS } from './entry.js';
+import { CONSENT_TITLE, CONSENT_SECTIONS } from './consent.js';
 import { PRIZE_KEYS } from './draw.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,7 +21,7 @@ export const maskPhone = (s) => (s ? '***-****-' + lastDigits(s) : '');
 const FIELD_DEFS = [
   { key: 'name', label: '이름', attrs: { type: 'text', maxLength: 20 } },
   { key: 'phone', label: '휴대폰 번호', attrs: { type: 'text', inputMode: 'numeric' } },
-  { key: 'birth', label: '생년월일 8자리', attrs: { type: 'text', inputMode: 'numeric', maxLength: 10, className: 'secret' } },
+  { key: 'birth', label: '생년월일 6자리', attrs: { type: 'text', inputMode: 'numeric', maxLength: 6, className: 'secret' } },
   { key: 'gender', label: '성별', choices: GENDERS },
 ];
 
@@ -86,9 +87,46 @@ function choiceField(def) {
   return { wrap };
 }
 
+// 동의서 원문(스크롤 상자)과 항목별 체크 + "모두 동의". 내용이 고정이라 한 번만 그린다.
+function renderConsent() {
+  const doc = $('consentDoc');
+  const h = document.createElement('p');
+  h.className = 'doc-title';
+  h.textContent = CONSENT_TITLE;
+  doc.append(h);
+  for (const sec of CONSENT_SECTIONS) {
+    const t = document.createElement('p');
+    t.className = 'doc-sec';
+    t.textContent = sec.title;
+    const ul = document.createElement('ul');
+    for (const item of sec.items) {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.append(li);
+    }
+    doc.append(t, ul);
+  }
+  const box = $('consentChecks');
+  for (const sec of CONSENT_SECTIONS) {
+    const lab = document.createElement('label');
+    lab.className = 'check';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.name = 'consent-' + sec.key;
+    chk.dataset.consent = sec.key;
+    lab.append(chk, ' ' + sec.agree);
+    box.append(lab);
+  }
+  const items = () => [...box.querySelectorAll('input[data-consent]')];
+  const clearErr = () => { document.querySelector('.err[data-err=consent]').textContent = ''; };
+  $('consentAll').addEventListener('change', (e) => { for (const c of items()) c.checked = e.target.checked; clearErr(); });
+  box.addEventListener('change', () => { $('consentAll').checked = items().every((c) => c.checked); clearErr(); });
+}
+
 export function createUI({ store, handlers }) {
   let toastTimer = null, adminEnabled = true;
   let readPhone = () => '';
+  renderConsent();
 
   // ---------- HUD ----------
   // 왼쪽 위는 로고 스티커. 제목 설정은 탭 제목과 로고 대체 텍스트에만 쓴다.
@@ -151,7 +189,7 @@ export function createUI({ store, handlers }) {
   }
 
   function openEntry() {
-    const { fields, consent } = store.state.settings;
+    const { fields } = store.state.settings;
     const box = $('entryFields');
     box.textContent = '';
     readPhone = () => '';
@@ -165,15 +203,8 @@ export function createUI({ store, handlers }) {
       wrap.append(err);
       box.append(wrap);
     }
-    const missing = !consent.org || !consent.purpose || !consent.retention;
-    $('consentMissing').hidden = !missing;
-    $('entrySubmit').disabled = missing;
-    const items = FIELD_DEFS.filter((d) => fields[d.key]).map((d) => d.label.replace(' 8자리', '')).join(', ');
-    $('consentText').textContent =
-      `수집 주체: ${consent.org} · 목적: ${consent.purpose} · 항목: ${items} · 보유 기간: ${consent.retention}` +
-      (consent.contact ? ` · 문의: ${consent.contact}` : '') +
-      ' · 동의하지 않으면 참여할 수 없어요.';
-    $('consentChk').checked = false;
+    for (const c of $('entryForm').querySelectorAll('.consent input[type=checkbox]')) c.checked = false;
+    $('consentDoc').scrollTop = 0;
     clearErrors();
     const first = box.querySelector('input');
     if (first) setTimeout(() => first.focus(), 0);
@@ -183,8 +214,10 @@ export function createUI({ store, handlers }) {
     e.preventDefault();
     const form = $('entryForm');
     const get = (n) => (form.elements[n] ? form.elements[n].value : '');
+    const consent = {};
+    for (const c of form.querySelectorAll('input[data-consent]')) consent[c.dataset.consent] = c.checked;
     const res = validateEntry(store.state.settings.fields, {
-      name: get('name'), phone: readPhone(), birth: get('birth'), gender: get('gender'), consent: $('consentChk').checked,
+      name: get('name'), phone: readPhone(), birth: get('birth'), gender: get('gender'), consent,
     });
     clearErrors();
     if (!res.ok) {
@@ -257,10 +290,6 @@ export function createUI({ store, handlers }) {
     $('fPhone').checked = s.fields.phone;
     $('fBirth').checked = s.fields.birth;
     $('fGender').checked = s.fields.gender;
-    $('cOrg').value = s.consent.org;
-    $('cPurpose').value = s.consent.purpose;
-    $('cRetention').value = s.consent.retention;
-    $('cContact').value = s.consent.contact;
     const tb = $('stockEdit');
     tb.textContent = '';
     for (const k of PRIZE_KEYS) {
@@ -291,12 +320,7 @@ export function createUI({ store, handlers }) {
     const pin = $('aPin').value.trim();
     if (pin && !/^\d{4,8}$/.test(pin)) { $('adminErr').textContent = '비밀번호는 숫자 4~8자리예요.'; return; }
     const fields = { name: $('fName').checked, phone: $('fPhone').checked, birth: $('fBirth').checked, gender: $('fGender').checked };
-    const consent = { org: $('cOrg').value.trim(), purpose: $('cPurpose').value.trim(), retention: $('cRetention').value.trim(), contact: $('cContact').value.trim() };
-    if (anyField(fields) && (!consent.org || !consent.purpose || !consent.retention)) {
-      $('adminErr').textContent = '정보를 수집하려면 수집 주체·목적·보유 기간을 입력해 주세요.';
-      return;
-    }
-    store.updateSettings({ title: $('aTitle').value.trim() || '은크크 Pick', sound: $('aSound').checked, showStock: $('aShowStock').checked, fields, consent, ...(pin ? { pin } : {}) });
+    store.updateSettings({ title: $('aTitle').value.trim() || '은크크 Pick', sound: $('aSound').checked, showStock: $('aShowStock').checked, fields, ...(pin ? { pin } : {}) });
     const vals = {};
     for (const inp of $('stockEdit').querySelectorAll('input')) (vals[inp.dataset.k] ||= {})[inp.dataset.f] = inp.value;
     for (const k of PRIZE_KEYS) store.setStock(k, vals[k].total, vals[k].left);
