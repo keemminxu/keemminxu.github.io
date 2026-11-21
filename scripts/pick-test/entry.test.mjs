@@ -1,7 +1,7 @@
 // entry.js 테스트
 import assert from 'node:assert/strict';
 import { test } from './harness.mjs';
-import { validateEntry, formatPhone, isValidBirth, parseBirth, lastDigits, maskPhoneInput, editDigits, anyField } from '../../assets/js/pick/entry.js';
+import { recentEntries, validateEntry, formatPhone, isValidBirth, parseBirth, lastDigits, maskPhoneInput, editDigits, anyField } from '../../assets/js/pick/entry.js';
 import { CONSENT_KEYS, CONSENT_SECTIONS } from '../../assets/js/pick/consent.js';
 
 const today = new Date(2026, 10, 21);
@@ -85,4 +85,18 @@ test('생년월일: 없는 날짜·미래 날짜 거부', () => {
 test('전화번호 포맷과 끝자리', () => {
   assert.equal(formatPhone('0111234567'), '011-123-4567');
   assert.equal(lastDigits('010-1234-5678'), '5678');
+});
+
+test('recentEntries: 최신순, 같은 사람은 한 번, 파기된 기록은 건너뜀', () => {
+  const r = (name, phone, birth = '19990101', gender = '남') => ({ no: 0, prize: 'cup', name, phone, birth, gender });
+  const draws = [r('가', '010-1111-1111'), r('', ''), r('나', '010-2222-2222'), r('가', '010-1111-1111'), r('다', '010-3333-3333'), r('나', '010-2222-2222')];
+  assert.deepEqual(recentEntries(draws).map((v) => v.name), ['나', '다', '가']);
+  assert.deepEqual(recentEntries(draws, 1)[0], { name: '나', phone: '010-2222-2222', birth: '19990101', gender: '남' });
+  assert.deepEqual(recentEntries([r('', '')]), []);
+  assert.deepEqual(recentEntries(undefined), []);
+  const f = { name: true, phone: true, birth: true, gender: true };
+  const v = recentEntries(draws, 1)[0];
+  const ok = validateEntry(f, { ...v, consent: AGREED }, today);
+  assert.equal(ok.ok, true, '불러온 값이 그대로 검사를 통과');
+  assert.deepEqual(ok.value, v, '저장 형식 그대로 다시 저장');
 });

@@ -1,5 +1,5 @@
 // 화면(DOM) — HUD, 정보 입력, 결과, 오버레이, 관리자 패널
-import { anyField, validateEntry, lastDigits, maskPhoneInput, editDigits, GENDERS } from './entry.js';
+import { anyField, validateEntry, lastDigits, maskPhoneInput, editDigits, digits, recentEntries, GENDERS } from './entry.js';
 import { CONSENT_TITLE, CONSENT_SECTIONS } from './consent.js';
 import { PRIZE_KEYS } from './draw.js';
 
@@ -25,7 +25,7 @@ const FIELD_DEFS = [
   { key: 'gender', label: '성별', choices: GENDERS },
 ];
 
-// 화면에는 가린 값만 두고 실제 숫자는 따로 들고 있는다. 반환값은 실제 숫자를 읽는 함수.
+// 화면에는 가린 값만 두고 실제 숫자는 따로 들고 있는다. 반환값: 실제 숫자 읽기(read)·채우기(set)
 function bindPhoneMask(input) {
   let buf = '';
   const render = () => {
@@ -48,7 +48,7 @@ function bindPhoneMask(input) {
   };
   input.addEventListener('input', (e) => { if (!e.isComposing) sync(); });
   input.addEventListener('compositionend', sync);
-  return () => buf;
+  return { read: () => buf, set: (v) => { buf = digits(v).slice(0, 11); render(); } };
 }
 
 function textField(def) {
@@ -126,6 +126,7 @@ function renderConsent() {
 export function createUI({ store, handlers }) {
   let toastTimer = null, adminEnabled = true;
   let readPhone = () => '';
+  let setPhone = () => {};
   renderConsent();
 
   // ---------- HUD ----------
@@ -193,21 +194,55 @@ export function createUI({ store, handlers }) {
     const box = $('entryFields');
     box.textContent = '';
     readPhone = () => '';
+    setPhone = () => {};
     for (const def of FIELD_DEFS) {
       if (!fields[def.key]) continue;
       const { wrap, input } = def.choices ? choiceField(def) : textField(def);
-      if (def.key === 'phone') readPhone = bindPhoneMask(input);
+      if (def.key === 'phone') ({ read: readPhone, set: setPhone } = bindPhoneMask(input));
       const err = document.createElement('p');
       err.className = 'err';
       err.dataset.err = def.key;
       wrap.append(err);
       box.append(wrap);
     }
+    renderRecent();
     for (const c of $('entryForm').querySelectorAll('.consent input[type=checkbox]')) c.checked = false;
     $('consentDoc').scrollTop = 0;
     clearErrors();
     const first = box.querySelector('input');
     if (first) setTimeout(() => first.focus(), 0);
+  }
+
+  // 연속 참여: 최근 참가자 정보를 버튼 한 번으로 채운다(미러링 화면이라 버튼에는 가린 이름·끝 4자리만)
+  function fillEntry(v) {
+    const form = $('entryForm');
+    const { fields } = store.state.settings;
+    if (fields.name && form.elements.name) form.elements.name.value = v.name;
+    if (fields.phone) setPhone(v.phone);
+    if (fields.birth && form.elements.birth) form.elements.birth.value = digits(v.birth); // 저장된 8자리 그대로(검사가 8자리도 받는다, 세기 추정 없이 정확)
+    if (fields.gender) for (const r of form.querySelectorAll('input[name=gender]')) r.checked = r.value === v.gender;
+    clearErrors();
+    $('consentDoc').focus();
+  }
+
+  function renderRecent() {
+    const box = $('entryRecent');
+    box.textContent = '';
+    const list = anyField(store.state.settings.fields) ? recentEntries(store.state.draws, 3) : [];
+    box.hidden = list.length === 0;
+    if (!list.length) return;
+    const t = document.createElement('span');
+    t.className = 'recent-title';
+    t.textContent = '이어서 참여하시나요?';
+    box.append(t);
+    for (const v of list) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn-ghost recent';
+      b.textContent = [maskName(v.name), v.phone ? '*' + lastDigits(v.phone) : ''].filter(Boolean).join(' ') + ' 정보 불러오기';
+      b.addEventListener('click', () => fillEntry(v));
+      box.append(b);
+    }
   }
 
   $('entryForm').addEventListener('submit', (e) => {

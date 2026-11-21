@@ -88,3 +88,20 @@ export function validateEntry(fields, input, today = new Date()) {
   if (anyField(fields) && !agreed) errors.consent = '필수 동의 세 항목에 모두 체크해야 참여할 수 있어요.';
   return { ok: Object.keys(errors).length === 0, errors, value };
 }
+
+// 연속 참여: 저장된 뽑기 기록에서 최근 참가자 정보를 꺼낸다(최신순, 같은 사람은 한 번만).
+// 기록 형식은 건드리지 않고 읽기만 한다. 개인정보를 파기한 기록(이름·휴대폰이 빈 값)은 건너뛴다.
+export function recentEntries(draws, n = 3) {
+  const out = [];
+  const seen = new Set();
+  for (let i = (draws || []).length - 1; i >= 0 && out.length < n; i--) {
+    const d = draws[i] || {};
+    const v = { name: d.name || '', phone: d.phone || '', birth: d.birth || '', gender: d.gender || '' };
+    if (!v.name && !v.phone) continue;
+    const id = digits(v.phone) || `${v.name}|${v.birth}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(v);
+  }
+  return out;
+}
