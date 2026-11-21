@@ -213,7 +213,7 @@ export function createUI({ store, handlers }) {
     if (first) setTimeout(() => first.focus(), 0);
   }
 
-  // 연속 참여: 최근 참가자 정보를 버튼 한 번으로 채운다(미러링 화면이라 버튼에는 가린 이름·끝 4자리만)
+  // 연속 참여: 직전 참가자 정보를 버튼 한 번으로 채운다
   function fillEntry(v) {
     const form = $('entryForm');
     const { fields } = store.state.settings;
@@ -225,24 +225,19 @@ export function createUI({ store, handlers }) {
     $('consentDoc').focus();
   }
 
+  // 직전 참가자(가장 최근 기록) 정보를 버튼 하나로 불러온다
   function renderRecent() {
     const box = $('entryRecent');
     box.textContent = '';
-    const list = anyField(store.state.settings.fields) ? recentEntries(store.state.draws, 3) : [];
-    box.hidden = list.length === 0;
-    if (!list.length) return;
-    const t = document.createElement('span');
-    t.className = 'recent-title';
-    t.textContent = '이어서 참여하시나요?';
-    box.append(t);
-    for (const v of list) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'btn-ghost recent';
-      b.textContent = [maskName(v.name), v.phone ? '*' + lastDigits(v.phone) : ''].filter(Boolean).join(' ') + ' 정보 불러오기';
-      b.addEventListener('click', () => fillEntry(v));
-      box.append(b);
-    }
+    const [last] = anyField(store.state.settings.fields) ? recentEntries(store.state.draws, 1) : [];
+    box.hidden = !last;
+    if (!last) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn-ghost recent';
+    b.textContent = '직전 정보 불러오기';
+    b.addEventListener('click', () => fillEntry(last));
+    box.append(b);
   }
 
   $('entryForm').addEventListener('submit', (e) => {
